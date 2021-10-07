@@ -261,6 +261,18 @@ impl Cpu {
                 0xc0 | 0xc4 | 0xcc => {
                     self.compare(&cur_inst.mode, self.y);
                 },
+                // DEC
+                0xc6 | 0xd6 | 0xce | 0xde => {
+                    self.dec(&cur_inst.mode);
+                },
+                // DEX
+                0xca => self.dex(),
+                // DEY
+                0x88 => self.dey(),
+                // EOR
+                0x49 | 0x45 | 0x55 | 0x4d | 0x5d | 0x59 | 0x41 | 0x51 => {
+                    self.eor(&cur_inst.mode);
+                }
                 // SBC
                 0xe9 | 0xe5 | 0xf5 | 0xed | 0xfd | 0xf9 | 0xe1 | 0xf1 => {
                     self.sbc(&cur_inst.mode);
@@ -408,6 +420,30 @@ impl Cpu {
             self.clear_carry();
         }
         self.update_zero_and_negative_flags(with.wrapping_sub(data));
+    }
+
+    fn dec(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let mut data = self.mem_read(addr);
+        data = data.wrapping_sub(1);
+        self.mem_write(addr, data);
+        self.update_zero_and_negative_flags(data);
+    }
+
+    fn dex(&mut self) {
+        self.x = self.x.wrapping_sub(1);
+        self.update_zero_and_negative_flags(self.x);
+    }
+
+    fn dey(&mut self) {
+        self.y = self.y.wrapping_sub(1);
+        self.update_zero_and_negative_flags(self.y);
+    }
+
+    fn eor(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let data = self.mem_read(addr);
+        self.a = data ^ self.a;    
     }
 
     fn sbc(&mut self, mode: &AddressingMode) {

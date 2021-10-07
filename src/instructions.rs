@@ -124,6 +124,23 @@ lazy_static! {
         Instruction::new(0xc4, "CPY", 2, 3, AddressingMode::ZeroPage),
         Instruction::new(0xcc, "CPY", 3, 4, AddressingMode::Absolute),
 
+        Instruction::new(0xc6, "DEC", 2, 5, AddressingMode::ZeroPage),
+        Instruction::new(0xd6, "DEC", 2, 6, AddressingMode::ZeroPageX),
+        Instruction::new(0xce, "DEC", 3, 6, AddressingMode::Absolute),
+        Instruction::new(0xde, "DEC", 3, 7, AddressingMode::AbsoluteX),
+
+        Instruction::new(0xca, "DEX", 1, 2, AddressingMode::Implied),
+        Instruction::new(0x88, "DEY", 1, 2, AddressingMode::Implied),
+
+        Instruction::new(0x49, "EOR", 2, 2, AddressingMode::Immediate),
+        Instruction::new(0x45, "EOR", 2, 3, AddressingMode::ZeroPage),
+        Instruction::new(0x55, "EOR", 2, 4, AddressingMode::ZeroPageX),
+        Instruction::new(0x4d, "EOR", 3, 4, AddressingMode::Absolute),
+        Instruction::new(0x5d, "EOR", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteX),
+        Instruction::new(0x59, "EOR", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteY),
+        Instruction::new(0x41, "EOR", 2, 6, AddressingMode::IndirectX),
+        Instruction::new(0x51, "EOR", 2, 5/*+1 if page crossed */, AddressingMode::IndirectY),
+
         Instruction::new(0x48, "PHA", 1, 2, AddressingMode::Implied),
         Instruction::new(0x68, "PLA", 1, 4, AddressingMode::Implied),
         Instruction::new(0x08, "PHP", 1, 3, AddressingMode::Implied),
