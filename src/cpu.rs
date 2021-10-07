@@ -179,7 +179,7 @@ impl Cpu {
                 // TXA
                 0x8a => {
                     self.a = self.x;
-                    self.update_zero_and_negative_flags(self.a)
+                    self.update_zero_and_negative_flags(self.a);
                 }
                 // TAY
                 0xa8 => {
@@ -189,8 +189,18 @@ impl Cpu {
                 // TYA
                 0x98 => {
                     self.a = self.y;
-                    self.update_zero_and_negative_flags(self.a)
-                }
+                    self.update_zero_and_negative_flags(self.a);
+                },
+                // TSX
+                0xba => {
+                    self.x = self.sp;
+                    self.update_zero_and_negative_flags(self.x);
+                },
+                // TXS
+                0x9a => {
+                    self.sp = self.x;
+                    self.update_zero_and_negative_flags(self.sp);
+                },
                 // INX
                 0xe8 => self.inx(),
                 // INY

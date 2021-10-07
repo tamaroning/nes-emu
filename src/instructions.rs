@@ -29,6 +29,8 @@ lazy_static! {
         Instruction::new(0x8a, "TXA", 1, 2, AddressingMode::Implied),
         Instruction::new(0xa8, "TAY", 1, 2, AddressingMode::Implied),
         Instruction::new(0x98, "TYA", 1, 2, AddressingMode::Implied),
+        Instruction::new(0xba, "TSX", 1, 2, AddressingMode::Implied),
+        Instruction::new(0x9a, "TXS", 1, 2, AddressingMode::Implied),
         Instruction::new(0xe8, "INX", 1, 2, AddressingMode::Implied),
         Instruction::new(0xc8, "INY", 1, 2, AddressingMode::Implied),
 
