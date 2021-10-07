@@ -201,10 +201,6 @@ impl Cpu {
                     self.sp = self.x;
                     self.update_zero_and_negative_flags(self.sp);
                 },
-                // INX
-                0xe8 => self.inx(),
-                // INY
-                0xc8 => self.iny(),
                 // LDA
                 0xa9 | 0xa5 | 0xb5 | 0xad | 0xbd | 0xb9 | 0xa1 | 0xb1 => {
                     self.lda(&cur_inst.mode);
@@ -269,6 +265,14 @@ impl Cpu {
                 0xca => self.dex(),
                 // DEY
                 0x88 => self.dey(),
+                // INC
+                0xe6 | 0xf6 | 0xee | 0xfe => {
+                    self.inc(&cur_inst.mode);
+                },
+                // INX
+                0xe8 => self.inx(),
+                // INY
+                0xc8 => self.iny(),
                 // EOR
                 0x49 | 0x45 | 0x55 | 0x4d | 0x5d | 0x59 | 0x41 | 0x51 => {
                     self.eor(&cur_inst.mode);
@@ -316,16 +320,6 @@ impl Cpu {
                 self.pc += (cur_inst.len - 1) as u16;
             }
         }
-    }
-
-    fn inx(&mut self) {
-        self.x = self.x.wrapping_add(1);
-        self.update_zero_and_negative_flags(self.x);
-    }
-
-    fn iny(&mut self) {
-        self.y = self.y.wrapping_add(1);
-        self.update_zero_and_negative_flags(self.y);
     }
 
     fn lda(&mut self, mode: &AddressingMode) {
@@ -437,6 +431,24 @@ impl Cpu {
 
     fn dey(&mut self) {
         self.y = self.y.wrapping_sub(1);
+        self.update_zero_and_negative_flags(self.y);
+    }
+
+    fn inc(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let mut data = self.mem_read(addr);
+        data = data.wrapping_add(1);
+        self.mem_write(addr, data);
+        self.update_zero_and_negative_flags(data);
+    }
+
+    fn inx(&mut self) {
+        self.x = self.x.wrapping_add(1);
+        self.update_zero_and_negative_flags(self.x);
+    }
+
+    fn iny(&mut self) {
+        self.y = self.y.wrapping_add(1);
         self.update_zero_and_negative_flags(self.y);
     }
 

@@ -31,8 +31,6 @@ lazy_static! {
         Instruction::new(0x98, "TYA", 1, 2, AddressingMode::Implied),
         Instruction::new(0xba, "TSX", 1, 2, AddressingMode::Implied),
         Instruction::new(0x9a, "TXS", 1, 2, AddressingMode::Implied),
-        Instruction::new(0xe8, "INX", 1, 2, AddressingMode::Implied),
-        Instruction::new(0xc8, "INY", 1, 2, AddressingMode::Implied),
 
         Instruction::new(0xa9, "LDA", 2, 2, AddressingMode::Immediate),
         Instruction::new(0xa5, "LDA", 2, 3, AddressingMode::ZeroPage),
@@ -131,6 +129,14 @@ lazy_static! {
 
         Instruction::new(0xca, "DEX", 1, 2, AddressingMode::Implied),
         Instruction::new(0x88, "DEY", 1, 2, AddressingMode::Implied),
+
+        Instruction::new(0xe6, "INC", 2, 5, AddressingMode::ZeroPage),
+        Instruction::new(0xf6, "INC", 2, 6, AddressingMode::ZeroPageX),
+        Instruction::new(0xee, "INC", 3, 6, AddressingMode::Absolute),
+        Instruction::new(0xfe, "INC", 3, 7, AddressingMode::AbsoluteX),
+
+        Instruction::new(0xe8, "INX", 1, 2, AddressingMode::Implied),
+        Instruction::new(0xc8, "INY", 1, 2, AddressingMode::Implied),
 
         Instruction::new(0x49, "EOR", 2, 2, AddressingMode::Immediate),
         Instruction::new(0x45, "EOR", 2, 3, AddressingMode::ZeroPage),
