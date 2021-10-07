@@ -5,3 +5,4 @@ authors = ["tamaron"]
 
 [dependencies]
 lazy_static = "1.4.0"
+bitflags = "1.3"

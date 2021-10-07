@@ -1,15 +1,20 @@
 #![allow(dead_code)]
 use std::collections::HashMap;
+use bitflags::bitflags;
 use instructions;
 
-const STAT_NEGATIVE : u8 = 0b10000000;
-const STAT_OVERFLOW : u8 = 0b01000000;
-//const UNUSED      : u8 = 0b00100000;
-const STAT_BRK      : u8 = 0b00010000;
-const STAT_DECIMAL  : u8 = 0b00001000;
-const STAT_INTERRUPT: u8 = 0b00000100;
-const STAT_ZERO     : u8 = 0b00000010;
-const STAT_CARRY    : u8 = 0b00000001;
+bitflags!{
+    pub struct StatFlags: u8 {
+        const NEGATIVE  = 0b10000000;
+        const OVERFLOW  = 0b01000000;
+        //const UNUSED  = 0b00100000;
+        const BRK       = 0b00010000;
+        const DECIMAL   = 0b00001000;
+        const INTERRUPT = 0b00000100;
+        const ZERO      = 0b00000010;
+        const CARRY     = 0b00000001;
+    }
+}
 
 pub struct Cpu {
     // general resgisters
@@ -29,7 +34,7 @@ pub struct Cpu {
         bit 1: zero
         bit 0: carry
     */
-    pub stat: u8,
+    pub stat: StatFlags,
     // 64 KiB memory
     memory: [u8; 0x10000],
 }
@@ -56,7 +61,7 @@ impl Cpu {
             a: 0,
             x: 0,
             y: 0,
-            stat: 0,
+            stat: StatFlags::from_bits_truncate(0b100100),
             memory: [0; 0x10000],
         }
     }
@@ -93,7 +98,7 @@ impl Cpu {
     pub fn reset(&mut self) {
         self.a = 0;
         self.x = 0;
-        self.stat = 0;
+        self.stat = StatFlags::from_bits_truncate(0b100100);
         // entry point stored at 0xFFFC
         self.pc = self.mem_read_u16(0xFFFC);
     }
@@ -210,15 +215,15 @@ impl Cpu {
 
     fn update_zero_and_negative_flags(&mut self, result: u8) {
         if result == 0 {
-            self.stat |= STAT_ZERO;
+            self.stat.insert(StatFlags::ZERO);
         } else {
-            self.stat &= !STAT_ZERO;
+            self.stat.remove(StatFlags::ZERO);
         }
 
         if result & 0b1000_0000 != 0 {
-            self.stat |= STAT_OVERFLOW;
+            self.stat.insert(StatFlags::NEGATIVE)
         } else {
-            self.stat &= !STAT_OVERFLOW;
+            self.stat.remove(StatFlags::NEGATIVE);
         }
     }
 }
