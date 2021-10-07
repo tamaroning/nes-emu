@@ -87,6 +87,24 @@ lazy_static! {
         Instruction::new(0x21, "AND", 2, 6, AddressingMode::IndirectX),
         Instruction::new(0x31, "AND", 2, 5/*+1 if page crossed */, AddressingMode::IndirectY),
 
+        Instruction::new(0x09, "ORA", 2, 2, AddressingMode::Immediate),
+        Instruction::new(0x05, "ORA", 2, 3, AddressingMode::ZeroPage),
+        Instruction::new(0x15, "ORA", 2, 4, AddressingMode::ZeroPageX),
+        Instruction::new(0x0d, "ORA", 3, 4, AddressingMode::Absolute),
+        Instruction::new(0x1d, "ORA", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteX),
+        Instruction::new(0x19, "ORA", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteY),
+        Instruction::new(0x01, "ORA", 2, 6, AddressingMode::IndirectX),
+        Instruction::new(0x11, "ORA", 2, 5/*+1 if page crossed */, AddressingMode::IndirectY),
+
+        Instruction::new(0x49, "EOR", 2, 2, AddressingMode::Immediate),
+        Instruction::new(0x45, "EOR", 2, 3, AddressingMode::ZeroPage),
+        Instruction::new(0x55, "EOR", 2, 4, AddressingMode::ZeroPageX),
+        Instruction::new(0x4d, "EOR", 3, 4, AddressingMode::Absolute),
+        Instruction::new(0x5d, "EOR", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteX),
+        Instruction::new(0x59, "EOR", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteY),
+        Instruction::new(0x41, "EOR", 2, 6, AddressingMode::IndirectX),
+        Instruction::new(0x51, "EOR", 2, 5/*+1 if page crossed */, AddressingMode::IndirectY),
+
         Instruction::new(0xe9, "SBC", 2, 2, AddressingMode::Immediate),
         Instruction::new(0xe5, "SBC", 2, 3, AddressingMode::ZeroPage),
         Instruction::new(0xf5, "SBC", 2, 4, AddressingMode::ZeroPageX),
@@ -107,7 +125,7 @@ lazy_static! {
         Instruction::new(0x56, "LSR", 2, 6, AddressingMode::ZeroPageX),
         Instruction::new(0x4e, "LSR", 3, 6, AddressingMode::Absolute),
         Instruction::new(0x5e, "LSR", 3, 7, AddressingMode::AbsoluteX),
-        
+
         Instruction::new(0x24, "BIT", 2, 3, AddressingMode::ZeroPage),
         Instruction::new(0x2c, "BIT", 3, 4, AddressingMode::Absolute),
 
@@ -143,15 +161,6 @@ lazy_static! {
 
         Instruction::new(0xe8, "INX", 1, 2, AddressingMode::Implied),
         Instruction::new(0xc8, "INY", 1, 2, AddressingMode::Implied),
-
-        Instruction::new(0x49, "EOR", 2, 2, AddressingMode::Immediate),
-        Instruction::new(0x45, "EOR", 2, 3, AddressingMode::ZeroPage),
-        Instruction::new(0x55, "EOR", 2, 4, AddressingMode::ZeroPageX),
-        Instruction::new(0x4d, "EOR", 3, 4, AddressingMode::Absolute),
-        Instruction::new(0x5d, "EOR", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteX),
-        Instruction::new(0x59, "EOR", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteY),
-        Instruction::new(0x41, "EOR", 2, 6, AddressingMode::IndirectX),
-        Instruction::new(0x51, "EOR", 2, 5/*+1 if page crossed */, AddressingMode::IndirectY),
 
         Instruction::new(0x48, "PHA", 1, 2, AddressingMode::Implied),
         Instruction::new(0x68, "PLA", 1, 4, AddressingMode::Implied),

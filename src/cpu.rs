@@ -233,6 +233,9 @@ impl Cpu {
                 0x29 | 0x25 | 0x35 | 0x2d | 0x3d | 0x39 | 0x21 | 0x31 => {
                     self.and(&cur_inst.mode);
                 },
+                0x09 | 0x05 | 0x15 | 0x0d | 0x1d | 0x19 | 0x01 | 0x11 => {
+                    self.ora(&cur_inst.mode);
+                }
                 // ASL accumulator
                 0x0a => {
                     self.asl_accumulator();
@@ -373,6 +376,24 @@ impl Cpu {
         let addr = self.get_operand_address(mode);
         let val = self.mem_read(addr);
         self.a = val & self.a;
+        // TODO: necessary?
+        self.update_zero_and_negative_flags(self.a);
+    }
+
+    fn ora(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let val = self.mem_read(addr);
+        self.a = val | self.a;
+        // TODO: necessary?
+        self.update_zero_and_negative_flags(self.a);
+    }
+
+    fn eor(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let data = self.mem_read(addr);
+        self.a = data ^ self.a;
+        // TODO: necessay?
+        self.update_zero_and_negative_flags(self.a);
     }
 
     fn asl_accumulator(&mut self) {
@@ -385,7 +406,7 @@ impl Cpu {
         data = data << 1;
         self.a = data;
         // TODO: necessary?
-        self.update_zero_and_negative_flags(data);
+        self.update_zero_and_negative_flags(self.a);
     }
 
     fn asl(&mut self, mode: &AddressingMode) {
@@ -411,7 +432,7 @@ impl Cpu {
         data = data >> 1;
         self.a = data;
         // TODO: necessary?
-        self.update_zero_and_negative_flags(data);
+        self.update_zero_and_negative_flags(self.a);
     }
 
     fn lsr(&mut self, mode: &AddressingMode) {
@@ -485,12 +506,6 @@ impl Cpu {
     fn iny(&mut self) {
         self.y = self.y.wrapping_add(1);
         self.update_zero_and_negative_flags(self.y);
-    }
-
-    fn eor(&mut self, mode: &AddressingMode) {
-        let addr = self.get_operand_address(mode);
-        let data = self.mem_read(addr);
-        self.a = data ^ self.a;    
     }
 
     fn sbc(&mut self, mode: &AddressingMode) {
