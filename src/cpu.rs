@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+use instructions;
+
 const STAT_NEGATIVE : u8 = 0b10000000;
 const STAT_OVERFLOW : u8 = 0b01000000;
 //const UNUSED      : u8 = 0b00100000;
@@ -41,6 +44,7 @@ pub enum AddressingMode {
     AbsoluteY,
     IndirectX,
     IndirectY,
+    NoneAddressing,
 }
 
 impl Cpu {
@@ -100,82 +104,79 @@ impl Cpu {
 
     fn get_operand_address(&self, mode: &AddressingMode) -> u16 {
         match mode {
-            AddressingMode::Immediate => self.pc,
-            AddressingMode::ZeroPage => self.mem_read(self.pc) as u16,
-            AddressingMode::Absolute => self.mem_read_u16(self.pc) as u16,
-            AddressingMode::ZeroPageX => {
+            &AddressingMode::Immediate => self.pc,
+            &AddressingMode::ZeroPage => self.mem_read(self.pc) as u16,
+            &AddressingMode::Absolute => self.mem_read_u16(self.pc) as u16,
+            &AddressingMode::ZeroPageX => {
                 let base = self.mem_read(self.pc);
                 let addr = base.wrapping_add(self.x) as u16;
                 addr
             },
-            AddressingMode::ZeroPageY => {
+            &AddressingMode::ZeroPageY => {
                 let base = self.mem_read(self.pc);
                 let addr = base.wrapping_add(self.y) as u16;
                 addr
             },
-            AddressingMode::AbsoluteX => {
+            &AddressingMode::AbsoluteX => {
                 let base = self.mem_read_u16(self.pc);
                 let addr = base.wrapping_add(self.x as u16);
                 addr
             },
-            AddressingMode::AbsoluteY => {
+            &AddressingMode::AbsoluteY => {
                 let base = self.mem_read_u16(self.pc);
                 let addr = base.wrapping_add(self.y as u16);
                 addr
             },
-            AddressingMode::IndirectX => {
+            &AddressingMode::IndirectX => {
                 let base = self.mem_read(self.pc);
                 let ptr = base.wrapping_add(self.x);
                 let low = self.mem_read(ptr as u16);
                 let high = self.mem_read(ptr.wrapping_add(1) as u16);
                 (high as u16) << 8 | (low as u16)
             },
-            AddressingMode::IndirectY => {
+            &AddressingMode::IndirectY => {
                 let base = self.mem_read(self.pc);
                 let ptr = base.wrapping_add(self.y);
                 let low = self.mem_read(ptr as u16);
                 let high = self.mem_read(ptr.wrapping_add(1) as u16);
                 (high as u16) << 8 | (low as u16)
             },
+            &AddressingMode::NoneAddressing => panic!(),
         }
     }
 
     pub fn run(&mut self) {
+        let ref instructions: HashMap<u8, &'static instructions::Instruction> = *instructions::INSTRUCTION_MAP;
+        
         loop {
             let opcode = self.mem_read(self.pc);
             self.pc += 1;
 
             println!("opcode: 0x{:X}", opcode);
+            let cur_inst = instructions.get(&opcode).expect(&format!("opcode 0x{:X} is not recognized", opcode));
 
             match opcode {
-                0x00 => {
-                    // BRK
-                    return;
+                // BRK
+                0x00 => return,
+                0xa9 | 0xa5 | 0xb5 | 0xad | 0xbd | 0xb9 | 0xa1 | 0xb1 => {
+                    self.lda(&cur_inst.mode);
                 },
-                0x85 => {
-                    self.sta(&AddressingMode::ZeroPage);
-                    self.pc += 1;
-                },
-                0x95 => {
-                    self.sta(&AddressingMode::ZeroPageX);
-                    self.pc += 1;
+                // LDX
+                0xa2 => {
+                    self.ldx(&cur_inst.mode);
                 }
-                0xA2 => {
-                    self.ldx(&AddressingMode::Immediate);
-                    self.pc += 1;
-                },
-                0xA5 => {
-                    self.lda(&AddressingMode::ZeroPage);
-                    self.pc += 1;
-                }
-                0xA9 => {
-                    self.lda(&AddressingMode::Immediate);
-                    self.pc += 1;
+                // STA
+                0x85 | 0x95 | 0x8d | 0x9d | 0x99 | 0x81 | 0x91 => {
+                    self.sta(&cur_inst.mode);
                 },
                 0xAA => self.tax(),
-                0xE8 => self.inx(),
+                0xe8 => self.inx(),
+            
                 _ => panic!("0x{:X} is not impremented", opcode),
             }
+
+            // increment pc
+            self.pc += (cur_inst.len - 1) as u16;
         }
     }
 

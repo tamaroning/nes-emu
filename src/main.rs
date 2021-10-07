@@ -1,4 +1,8 @@
 mod cpu;
+mod instructions;
+use cpu::AddressingMode;
+#[macro_use]
+extern crate lazy_static;
 
 fn main() {
     println!("Hello NES emulator!");
