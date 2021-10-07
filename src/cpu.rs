@@ -252,6 +252,18 @@ impl Cpu {
                 0x46 | 0x56 | 0x4e | 0x5e => {
                     self.lsr(&cur_inst.mode);
                 },
+                // ROL accumulator
+                0x2a => self.rol_accumulator(),
+                // ROL
+                0x26 | 0x36 | 0x2e | 0x3e => {
+                    self.rol(&cur_inst.mode);
+                },
+                // ROR accumulator
+                0x6a => self.ror_accumulator(),
+                // ROR
+                0x66 | 0x76 | 0x6e | 0x7e => {
+                    self.ror(&cur_inst.mode);
+                },
                 //BIT
                 0x24 | 0x2c => {
                     self.bit(&cur_inst.mode);
@@ -444,6 +456,74 @@ impl Cpu {
             self.clear_carry();
         }
         data = data >> 1;
+        self.mem_write(addr, data);
+        self.update_zero_and_negative_flags(data);
+    }
+
+    fn rol_accumulator(&mut self) {
+        let mut data = self.a;
+        let tmp_carry = self.stat.contains(StatFlags::CARRY);
+        if data >> 7 == 1 {
+            self.set_carry();
+        } else {
+            self.clear_carry();
+        }
+        data = data << 1;
+        if tmp_carry {
+            data = data | 1;
+        }
+        self.a = data;
+        // TODO: necessary?
+        self.update_zero_and_negative_flags(data);
+    }
+
+    fn rol(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let mut data = self.mem_read(addr);
+        let tmp_carry = self.stat.contains(StatFlags::CARRY);
+        if data >> 7 == 1 {
+            self.set_carry();
+        } else {
+            self.clear_carry();
+        }
+        data = data << 1;
+        if tmp_carry {
+            data = data | 1;
+        }
+        self.mem_write(addr, data);
+        self.update_zero_and_negative_flags(data);
+    }
+
+    fn ror_accumulator(&mut self) {
+        let mut data = self.a;
+        let tmp_carry = self.stat.contains(StatFlags::CARRY);
+        if data & 1 == 1 {
+            self.set_carry();
+        } else {
+            self.clear_carry();
+        }
+        data = data >> 1;
+        if tmp_carry {
+            data = data | 0b1000_0000;
+        }
+        self.a = data;
+        // TODO: necessary?
+        self.update_zero_and_negative_flags(data);
+    }
+
+    fn ror(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let mut data = self.mem_read(addr);
+        let tmp_carry = self.stat.contains(StatFlags::CARRY);
+        if data & 1 == 1 {
+            self.set_carry();
+        } else {
+            self.clear_carry();
+        }
+        data = data >> 1;
+        if tmp_carry {
+            data = data | 0b1000_0000;
+        }
         self.mem_write(addr, data);
         self.update_zero_and_negative_flags(data);
     }
