@@ -241,6 +241,14 @@ impl Cpu {
                 0x06 | 0x16 | 0x0e | 0x1e => {
                     self.asl(&cur_inst.mode);
                 },
+                // LSR accumulator
+                0x4a => {
+                    self.lsr_accumulator();
+                },
+                // LSR
+                0x46 | 0x56 | 0x4e | 0x5e => {
+                    self.lsr(&cur_inst.mode);
+                },
                 //BIT
                 0x24 | 0x2c => {
                     self.bit(&cur_inst.mode);
@@ -276,7 +284,7 @@ impl Cpu {
                 // EOR
                 0x49 | 0x45 | 0x55 | 0x4d | 0x5d | 0x59 | 0x41 | 0x51 => {
                     self.eor(&cur_inst.mode);
-                }
+                },
                 // SBC
                 0xe9 | 0xe5 | 0xf5 | 0xed | 0xfd | 0xf9 | 0xe1 | 0xf1 => {
                     self.sbc(&cur_inst.mode);
@@ -376,6 +384,7 @@ impl Cpu {
         }
         data = data << 1;
         self.a = data;
+        // TODO: necessary?
         self.update_zero_and_negative_flags(data);
     }
 
@@ -388,6 +397,32 @@ impl Cpu {
             self.clear_carry();
         }
         data = data << 1;
+        self.mem_write(addr, data);
+        self.update_zero_and_negative_flags(data);
+    }
+
+    fn lsr_accumulator(&mut self) {
+        let mut data = self.a;
+        if data & 1 == 1 {
+            self.set_carry();
+        } else {
+            self.clear_carry();
+        }
+        data = data >> 1;
+        self.a = data;
+        // TODO: necessary?
+        self.update_zero_and_negative_flags(data);
+    }
+
+    fn lsr(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let mut data = self.mem_read(addr);
+        if data & 1 == 1 {
+            self.set_carry();
+        } else {
+            self.clear_carry();
+        }
+        data = data >> 1;
         self.mem_write(addr, data);
         self.update_zero_and_negative_flags(data);
     }
