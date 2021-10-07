@@ -24,9 +24,9 @@ impl Instruction {
 
 lazy_static! {
     pub static ref CPU_INSTRUCTIONS: Vec<Instruction> = vec![
-        Instruction::new(0x00, "BRK", 1, 7, AddressingMode::NoneAddressing),
-        Instruction::new(0xaa, "TAX", 1, 2, AddressingMode::NoneAddressing),
-        Instruction::new(0xe8, "INX", 1, 2, AddressingMode::NoneAddressing),
+        Instruction::new(0x00, "BRK", 1, 7, AddressingMode::Implied),
+        Instruction::new(0xaa, "TAX", 1, 2, AddressingMode::Implied),
+        Instruction::new(0xe8, "INX", 1, 2, AddressingMode::Implied),
 
         Instruction::new(0xa9, "LDA", 2, 2, AddressingMode::Immediate),
         Instruction::new(0xa5, "LDA", 2, 3, AddressingMode::ZeroPage),
@@ -69,8 +69,10 @@ lazy_static! {
         Instruction::new(0xe1, "SBC", 2, 6, AddressingMode::IndirectX),
         Instruction::new(0xf1, "SBC", 2, 5/*+1 if page crossed */, AddressingMode::IndirectY),
 
-        Instruction::new(0x08, "PHP", 1, 3, AddressingMode::NoneAddressing),
-        Instruction::new(0x28, "PLP", 1, 3, AddressingMode::NoneAddressing),
+        Instruction::new(0x08, "PHP", 1, 3, AddressingMode::Implied),
+        Instruction::new(0x28, "PLP", 1, 3, AddressingMode::Implied),
+
+        Instruction::new(0x40, "RTI", 1, 6, AddressingMode::Implied),
     ];
 
     pub static ref INSTRUCTION_MAP: HashMap<u8, &'static Instruction> = {

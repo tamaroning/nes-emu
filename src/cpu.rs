@@ -55,7 +55,7 @@ pub enum AddressingMode {
     AbsoluteY,
     IndirectX,
     IndirectY,
-    NoneAddressing,
+    Implied,
 }
 
 impl Cpu {
@@ -153,7 +153,7 @@ impl Cpu {
                 let high = self.mem_read(ptr.wrapping_add(1) as u16);
                 (high as u16) << 8 | (low as u16)
             },
-            &AddressingMode::NoneAddressing => panic!(),
+            &AddressingMode::Implied => panic!(),
         }
     }
 
@@ -193,6 +193,8 @@ impl Cpu {
                 },
                 0x08 => self.php(),
                 0x28 => self.plp(),
+                0x40 => self.rti(),
+                
                 _ => panic!("0x{:X} is not impremented", opcode),
             }
 
@@ -282,9 +284,30 @@ impl Cpu {
         self.sp = self.sp.wrapping_sub(1);
     }
 
-    fn stack_pop(&mut self) -> u8{
+    fn stack_push_u16(&mut self, data: u16) {
+        let high = (data >> 8) as u8;
+        let low = (data & 0xff) as u8;
+        self.stack_push(high);
+        self.stack_push(low);
+    }
+
+    fn stack_pop(&mut self) -> u8 {
         self.sp = self.sp.wrapping_add(1);
         self.mem_read((STACK_BASE as u16) + self.sp as u16)
+    }
+
+    fn stack_pop_u16(&mut self) -> u16 {
+        let low = self.stack_pop() as u16;
+        let high = self.stack_pop() as u16;
+        high << 8 | low
+    }
+
+    // return from interrupt
+    fn rti(&mut self) {
+        self.stat.bits = self.stack_pop();
+        self.stat.remove(StatFlags::BREAK);
+        self.stat.remove(StatFlags::BREAK2);
+        self.pc = self.stack_pop_u16();
     }
 
     fn update_zero_and_negative_flags(&mut self, result: u8) {
