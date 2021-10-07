@@ -172,9 +172,29 @@ impl Cpu {
                 // BRK
                 0x00 => return,
                 // TAX
-                0xAA => self.tax(),
+                0xAA => {
+                    self.x = self.a;
+                    self.update_zero_and_negative_flags(self.x);
+                },
+                // TXA
+                0x8a => {
+                    self.a = self.x;
+                    self.update_zero_and_negative_flags(self.a)
+                }
+                // TAY
+                0xa8 => {
+                    self.y = self.a;
+                    self.update_zero_and_negative_flags(self.y);
+                },
+                // TYA
+                0x98 => {
+                    self.a = self.y;
+                    self.update_zero_and_negative_flags(self.a)
+                }
                 // INX
                 0xe8 => self.inx(),
+                // INY
+                0xc8 => self.iny(),
                 // LDA
                 0xa9 | 0xa5 | 0xb5 | 0xad | 0xbd | 0xb9 | 0xa1 | 0xb1 => {
                     self.lda(&cur_inst.mode);
@@ -248,6 +268,16 @@ impl Cpu {
         }
     }
 
+    fn inx(&mut self) {
+        self.x = self.x.wrapping_add(1);
+        self.update_zero_and_negative_flags(self.x);
+    }
+
+    fn iny(&mut self) {
+        self.y = self.y.wrapping_add(1);
+        self.update_zero_and_negative_flags(self.y);
+    }
+
     fn lda(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         self.a = self.mem_read(addr);
@@ -279,16 +309,6 @@ impl Cpu {
     fn sty(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         self.mem_write(addr, self.y);
-    }
-
-    fn tax(&mut self) {
-        self.x = self.a;
-        self.update_zero_and_negative_flags(self.x);
-    }
-
-    fn inx(&mut self) {
-        self.x = self.x.wrapping_add(1);
-        self.update_zero_and_negative_flags(self.x);
     }
 
     fn adc(&mut self, mode: &AddressingMode) {
