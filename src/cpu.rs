@@ -245,8 +245,21 @@ impl Cpu {
                 0x06 | 0x16 | 0x0e | 0x1e => {
                     self.asl(&cur_inst.mode);
                 },
+                //BIT
                 0x24 | 0x2c => {
                     self.bit(&cur_inst.mode);
+                },
+                // CMP
+                0xc9 | 0xc5 | 0xd5 | 0xcd | 0xdd | 0xd9 | 0xc1 | 0xd1 => {
+                    self.compare(&cur_inst.mode, self.a);
+                },
+                // CPX
+                0xe0 | 0xe4 | 0xec => {
+                    self.compare(&cur_inst.mode, self.x);
+                },
+                // CPY
+                0xc0 | 0xc4 | 0xcc => {
+                    self.compare(&cur_inst.mode, self.y);
                 },
                 // SBC
                 0xe9 | 0xe5 | 0xf5 | 0xed | 0xfd | 0xf9 | 0xe1 | 0xf1 => {
@@ -384,6 +397,17 @@ impl Cpu {
         }
         self.stat.set(StatFlags::NEGATIVE, data & (1<<7) > 0);
         self.stat.set(StatFlags::OVERFLOW, data & (1<<6) > 0);
+    }
+
+    fn compare(&mut self, mode: &AddressingMode, with: u8) {
+        let addr = self.get_operand_address(mode);
+        let data = self.mem_read(addr);
+        if data < with {
+            self.set_carry();
+        } else {
+            self.clear_carry();
+        }
+        self.update_zero_and_negative_flags(with.wrapping_sub(data));
     }
 
     fn sbc(&mut self, mode: &AddressingMode) {

@@ -107,6 +107,23 @@ lazy_static! {
         Instruction::new(0x24, "BIT", 2, 3, AddressingMode::ZeroPage),
         Instruction::new(0x2c, "BIT", 3, 4, AddressingMode::Absolute),
 
+        Instruction::new(0xc9, "CMP", 2, 2, AddressingMode::Immediate),
+        Instruction::new(0xc5, "CMP", 2, 3, AddressingMode::ZeroPage),
+        Instruction::new(0xd5, "CMP", 2, 4, AddressingMode::ZeroPageX),
+        Instruction::new(0xcd, "CMP", 3, 4, AddressingMode::Absolute),
+        Instruction::new(0xdd, "CMP", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteX),
+        Instruction::new(0xd9, "CMP", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteY),
+        Instruction::new(0xc1, "CMP", 2, 6, AddressingMode::IndirectX),
+        Instruction::new(0xd1, "CMP", 2, 5/*+1 if page crossed */, AddressingMode::IndirectY),
+
+        Instruction::new(0xe0, "CPX", 2, 2, AddressingMode::Immediate),
+        Instruction::new(0xe4, "CPX", 2, 3, AddressingMode::ZeroPage),
+        Instruction::new(0xec, "CPX", 3, 4, AddressingMode::Absolute),
+
+        Instruction::new(0xc0, "CPY", 2, 2, AddressingMode::Immediate),
+        Instruction::new(0xc4, "CPY", 2, 3, AddressingMode::ZeroPage),
+        Instruction::new(0xcc, "CPY", 3, 4, AddressingMode::Absolute),
+
         Instruction::new(0x48, "PHA", 1, 2, AddressingMode::Implied),
         Instruction::new(0x68, "PLA", 1, 4, AddressingMode::Implied),
         Instruction::new(0x08, "PHP", 1, 3, AddressingMode::Implied),
