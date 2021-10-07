@@ -175,20 +175,35 @@ impl Cpu {
                 0xAA => self.tax(),
                 // INX
                 0xe8 => self.inx(),
+                // LDA
                 0xa9 | 0xa5 | 0xb5 | 0xad | 0xbd | 0xb9 | 0xa1 | 0xb1 => {
                     self.lda(&cur_inst.mode);
                 },
                 // LDX
-                0xa2 => {
+                0xa2 | 0xa6 | 0xb6 | 0xae | 0xbe => {
                     self.ldx(&cur_inst.mode);
+                },
+                // LDY
+                0xa0 | 0xa4 | 0xb4 | 0xac | 0xbc => {
+                    self.ldy(&cur_inst.mode);
                 }
                 // STA
                 0x85 | 0x95 | 0x8d | 0x9d | 0x99 | 0x81 | 0x91 => {
                     self.sta(&cur_inst.mode);
                 },
+                // STX
+                0x86 | 0x96 | 0x8e => {
+                    self.stx(&cur_inst.mode);
+                },
+                // STY
+                0x84 | 0x94 | 0x8c => {
+                    self.sty(&cur_inst.mode)
+                },
+                // ADC
                 0x69 | 0x65 | 0x75 | 0x6d | 0x7d | 0x79 | 0x61 | 0x71 => {
                     self.adc(&cur_inst.mode);
                 },
+                // SBC
                 0xe9 | 0xe5 | 0xf5 | 0xed | 0xfd | 0xf9 | 0xe1 | 0xf1 => {
                     self.sbc(&cur_inst.mode);
                 },
@@ -196,7 +211,9 @@ impl Cpu {
                 0x48 => self.stack_push(self.a),
                 // PLA
                 0x68 => { self.a = self.stack_pop(); }
+                // PHP
                 0x08 => self.php(),
+                // PLP
                 0x28 => self.plp(),
                 //RTI
                 0x40 => {
@@ -221,7 +238,6 @@ impl Cpu {
                     self.pc = addr;
                 },
 
-
                 _ => panic!("0x{:X} is not impremented", opcode),
             }
 
@@ -232,10 +248,11 @@ impl Cpu {
         }
     }
 
-    fn sta(&mut self, mode: &AddressingMode) {
+    fn lda(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
-        self.mem_write(addr, self.a);
-    } 
+        self.a = self.mem_read(addr);
+        self.update_zero_and_negative_flags(self.a);
+    }
 
     fn ldx(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
@@ -243,10 +260,25 @@ impl Cpu {
         self.update_zero_and_negative_flags(self.x);
     }
 
-    fn lda(&mut self, mode: &AddressingMode) {
+    fn ldy(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
-        self.a = self.mem_read(addr);
-        self.update_zero_and_negative_flags(self.a);
+        self.y = self.mem_read(addr);
+        self.update_zero_and_negative_flags(self.y);
+    }
+
+    fn sta(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.mem_write(addr, self.a);
+    }
+
+    fn stx(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.mem_write(addr, self.x);
+    }
+
+    fn sty(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.mem_write(addr, self.y);
     }
 
     fn tax(&mut self) {

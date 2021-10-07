@@ -43,6 +43,12 @@ lazy_static! {
         Instruction::new(0xae, "LDX", 3, 4, AddressingMode::Absolute),
         Instruction::new(0xbe, "LDX", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteY),
 
+        Instruction::new(0xa0, "LDY", 2, 2, AddressingMode::Immediate),
+        Instruction::new(0xa4, "LDY", 2, 3, AddressingMode::ZeroPage),
+        Instruction::new(0xb4, "LDY", 2, 4, AddressingMode::ZeroPageX),
+        Instruction::new(0xac, "LDY", 3, 4, AddressingMode::Absolute),
+        Instruction::new(0xbc, "LDY", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteX),
+
         Instruction::new(0x85, "STA", 2, 3, AddressingMode::ZeroPage),
         Instruction::new(0x95, "STA", 2, 4, AddressingMode::ZeroPageX),
         Instruction::new(0x8d, "STA", 3, 4, AddressingMode::Absolute),
@@ -50,6 +56,14 @@ lazy_static! {
         Instruction::new(0x99, "STA", 3, 5, AddressingMode::AbsoluteY),
         Instruction::new(0x81, "STA", 2, 6, AddressingMode::IndirectX),
         Instruction::new(0x91, "STA", 2, 6, AddressingMode::IndirectY),
+
+        Instruction::new(0x86, "STX", 2, 3, AddressingMode::ZeroPage),
+        Instruction::new(0x96, "STX", 2, 4, AddressingMode::ZeroPageY),
+        Instruction::new(0x8e, "STX", 3, 4, AddressingMode::Absolute),
+        
+        Instruction::new(0x84, "STY", 2, 3, AddressingMode::ZeroPage),
+        Instruction::new(0x94, "STY", 2, 4, AddressingMode::ZeroPageX),
+        Instruction::new(0x8c, "STY", 3, 4, AddressingMode::Absolute),
 
         Instruction::new(0x69, "ADC", 2, 2, AddressingMode::Immediate),
         Instruction::new(0x65, "ADC", 2, 3, AddressingMode::ZeroPage),
