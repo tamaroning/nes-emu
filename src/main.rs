@@ -1,6 +1,6 @@
+#![allow(dead_code)]
 mod cpu;
 mod instructions;
-use cpu::AddressingMode;
 #[macro_use]
 extern crate lazy_static;
 
@@ -10,7 +10,6 @@ fn main() {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use cpu::Cpu;
 
     #[test]

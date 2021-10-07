@@ -1,7 +1,6 @@
+#![allow(dead_code)]
 use cpu::AddressingMode;
 use std::collections::HashMap;
-#[macro_use]
-use lazy_static;
 
 pub struct Instruction {
     pub opcode: u8,
