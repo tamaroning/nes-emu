@@ -191,10 +191,14 @@ impl Cpu {
                 0xe9 | 0xe5 | 0xf5 | 0xed | 0xfd | 0xf9 | 0xe1 | 0xf1 => {
                     self.sbc(&cur_inst.mode);
                 },
+                // PHA
+                0x48 => self.stack_push(self.a),
+                // PLA
+                0x68 => { self.a = self.stack_pop(); }
                 0x08 => self.php(),
                 0x28 => self.plp(),
                 0x40 => self.rti(),
-                
+
                 _ => panic!("0x{:X} is not impremented", opcode),
             }
 
