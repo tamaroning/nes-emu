@@ -10,7 +10,7 @@ fn main() {
 }
 
 #[cfg(test)]
-mod test {
+mod cpu_test {
     use cpu::Cpu;
 
     #[test]

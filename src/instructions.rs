@@ -50,6 +50,27 @@ lazy_static! {
         Instruction::new(0x99, "STA", 3, 5, AddressingMode::AbsoluteY),
         Instruction::new(0x81, "STA", 2, 6, AddressingMode::IndirectX),
         Instruction::new(0x91, "STA", 2, 6, AddressingMode::IndirectY),
+
+        Instruction::new(0x69, "ADC", 2, 2, AddressingMode::Immediate),
+        Instruction::new(0x65, "ADC", 2, 3, AddressingMode::ZeroPage),
+        Instruction::new(0x75, "ADC", 2, 4, AddressingMode::ZeroPageX),
+        Instruction::new(0x6d, "ADC", 3, 4, AddressingMode::Absolute),
+        Instruction::new(0x7d, "ADC", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteX),
+        Instruction::new(0x79, "ADC", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteY),
+        Instruction::new(0x61, "ADC", 2, 6, AddressingMode::IndirectX),
+        Instruction::new(0x71, "ADC", 2, 5/*+1 if page crossed */, AddressingMode::IndirectY),
+
+        Instruction::new(0xe9, "SBC", 2, 2, AddressingMode::Immediate),
+        Instruction::new(0xe5, "SBC", 2, 3, AddressingMode::ZeroPage),
+        Instruction::new(0xf5, "SBC", 2, 4, AddressingMode::ZeroPageX),
+        Instruction::new(0xed, "SBC", 3, 4, AddressingMode::Absolute),
+        Instruction::new(0xfd, "SBC", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteX),
+        Instruction::new(0xf9, "SBC", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteY),
+        Instruction::new(0xe1, "SBC", 2, 6, AddressingMode::IndirectX),
+        Instruction::new(0xf1, "SBC", 2, 5/*+1 if page crossed */, AddressingMode::IndirectY),
+
+        Instruction::new(0x08, "PHP", 1, 3, AddressingMode::NoneAddressing),
+        Instruction::new(0x28, "PLP", 1, 3, AddressingMode::NoneAddressing),
     ];
 
     pub static ref INSTRUCTION_MAP: HashMap<u8, &'static Instruction> = {

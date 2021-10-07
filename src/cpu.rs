@@ -3,18 +3,34 @@ use std::collections::HashMap;
 use bitflags::bitflags;
 use instructions;
 
+/*
+7  bit  0
+---- ----
+NVss DIZC
+|||| ||||
+|||| |||+- Carry
+|||| ||+-- Zero
+|||| |+--- Interrupt Disable
+|||| +---- Decimal (no effect on NES)
+||++------ No CPU effect, see: the B flag
+|+-------- Overflow
++--------- Negative
+*/
 bitflags!{
     pub struct StatFlags: u8 {
         const NEGATIVE  = 0b10000000;
         const OVERFLOW  = 0b01000000;
-        //const UNUSED  = 0b00100000;
-        const BRK       = 0b00010000;
+        const BREAK2    = 0b00100000;
+        const BREAK     = 0b00010000;
         const DECIMAL   = 0b00001000;
         const INTERRUPT = 0b00000100;
         const ZERO      = 0b00000010;
         const CARRY     = 0b00000001;
     }
 }
+
+const STACK_BASE: u16 = 0x0100;
+const STACK_RESET: u8 = 0xfd;
 
 pub struct Cpu {
     // general resgisters
@@ -23,17 +39,6 @@ pub struct Cpu {
     pub a: u8,
     pub x: u8,
     pub y: u8,
-    // processor status
-    /*
-        bit 7: negative (MSB of A)
-        bit 6: overflow
-        bit 5: hardwired 1 (not used)
-        bit 4: brk flag (6502 has two kinds of interrupt, BRK and IRQ)
-        bit 3: decimal (if set 1, run in BCD mode)
-        bit 2: interrupt flag (1: forbid interruption)
-        bit 1: zero
-        bit 0: carry
-    */
     pub stat: StatFlags,
     // 64 KiB memory
     memory: [u8; 0x10000],
@@ -57,7 +62,7 @@ impl Cpu {
     pub fn new() -> Self {
         Cpu {
             pc: 0,
-            sp: 0,
+            sp: STACK_RESET,
             a: 0,
             x: 0,
             y: 0,
@@ -101,6 +106,7 @@ impl Cpu {
         self.stat = StatFlags::from_bits_truncate(0b100100);
         // entry point stored at 0xFFFC
         self.pc = self.mem_read_u16(0xFFFC);
+        self.sp = STACK_RESET;
     }
 
     pub fn load(&mut self, program: Vec<u8>) {
@@ -158,12 +164,16 @@ impl Cpu {
             let opcode = self.mem_read(self.pc);
             self.pc += 1;
 
-            println!("opcode: 0x{:X}", opcode);
+            //println!("opcode: 0x{:X}", opcode);
             let cur_inst = instructions.get(&opcode).expect(&format!("opcode 0x{:X} is not recognized", opcode));
 
             match opcode {
                 // BRK
                 0x00 => return,
+                // TAX
+                0xAA => self.tax(),
+                // INX
+                0xe8 => self.inx(),
                 0xa9 | 0xa5 | 0xb5 | 0xad | 0xbd | 0xb9 | 0xa1 | 0xb1 => {
                     self.lda(&cur_inst.mode);
                 },
@@ -175,9 +185,14 @@ impl Cpu {
                 0x85 | 0x95 | 0x8d | 0x9d | 0x99 | 0x81 | 0x91 => {
                     self.sta(&cur_inst.mode);
                 },
-                0xAA => self.tax(),
-                0xe8 => self.inx(),
-            
+                0x69 | 0x65 | 0x75 | 0x6d | 0x7d | 0x79 | 0x61 | 0x71 => {
+                    self.adc(&cur_inst.mode);
+                },
+                0xe9 | 0xe5 | 0xf5 | 0xed | 0xfd | 0xf9 | 0xe1 | 0xf1 => {
+                    self.sbc(&cur_inst.mode);
+                },
+                0x08 => self.php(),
+                0x28 => self.plp(),
                 _ => panic!("0x{:X} is not impremented", opcode),
             }
 
@@ -211,6 +226,65 @@ impl Cpu {
     fn inx(&mut self) {
         self.x = self.x.wrapping_add(1);
         self.update_zero_and_negative_flags(self.x);
+    }
+
+    fn adc(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let val = self.mem_read(addr);
+        self.add_to_a(val);
+    }
+
+    fn sbc(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let val = self.mem_read(addr);
+        self.add_to_a((val as i8).wrapping_neg().wrapping_sub(1) as u8);
+    }
+
+    // TODO: ignore decimal mode
+    fn add_to_a(&mut self, data: u8) {
+        let sum = self.a as u16 + data as u16
+            + (if self.stat.contains(StatFlags::CARRY) {1} else {0});
+        let res =  sum as u8;
+        
+        // update N V Z C
+        let carry = sum > 0xff;
+        if carry {
+            self.stat.insert(StatFlags::CARRY);
+        } else {
+            self.stat.remove(StatFlags::CARRY);
+        }
+        // TODO: Is this correct?
+        if (data ^ res) & (res ^ self.a) & 0x80 != 0 {
+            self.stat.insert(StatFlags::OVERFLOW);
+        } else {
+            self.stat.remove(StatFlags::OVERFLOW);
+        }
+        self.update_zero_and_negative_flags(res);
+
+        self.a = res;
+    }
+
+    fn php(&mut self) {
+        let mut stat = self.stat.clone();
+        stat.insert(StatFlags::BREAK);
+        stat.insert(StatFlags::BREAK2);
+        self.stack_push(stat.bits());
+    }
+
+    fn plp(&mut self) {
+        self.stat.bits = self.stack_pop();
+        self.stat.remove(StatFlags::BREAK);
+        self.stat.remove(StatFlags::BREAK2);
+    }
+
+    fn stack_push(&mut self, data: u8) {
+        self.mem_write((STACK_BASE as u16) + self.sp as u16, data);
+        self.sp = self.sp.wrapping_sub(1);
+    }
+
+    fn stack_pop(&mut self) -> u8{
+        self.sp = self.sp.wrapping_add(1);
+        self.mem_read((STACK_BASE as u16) + self.sp as u16)
     }
 
     fn update_zero_and_negative_flags(&mut self, result: u8) {
