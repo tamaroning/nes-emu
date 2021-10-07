@@ -1,0 +1,6 @@
+[package]
+name = "nes-emu"
+version = "0.1.0"
+authors = ["tamaron"]
+
+[dependencies]
