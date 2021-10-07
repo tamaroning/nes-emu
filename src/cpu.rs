@@ -66,11 +66,11 @@ impl Cpu {
         (high << 8) |  low
     }
 
-    fn mem_write(&mut self, addr: u16, data: u8) {
+    pub fn mem_write(&mut self, addr: u16, data: u8) {
         self.memory[addr as usize] = data;
     }
 
-    fn mem_write_u16(&mut self, pos: u16, data: u16) {
+    pub fn mem_write_u16(&mut self, pos: u16, data: u16) {
         let high = (data >> 8) as u8;
         let low = (data & 0xFF) as u8;
         self.mem_write(pos, low);
@@ -152,13 +152,23 @@ impl Cpu {
                     // BRK
                     return;
                 },
+                0x85 => {
+                    self.sta(&AddressingMode::ZeroPage);
+                    self.pc += 1;
+                },
+                0x95 => {
+                    self.sta(&AddressingMode::ZeroPageX);
+                    self.pc += 1;
+                }
                 0xA2 => {
-                    // LDX imm
                     self.ldx(&AddressingMode::Immediate);
                     self.pc += 1;
                 },
+                0xA5 => {
+                    self.lda(&AddressingMode::ZeroPage);
+                    self.pc += 1;
+                }
                 0xA9 => {
-                    // LDA imm
                     self.lda(&AddressingMode::Immediate);
                     self.pc += 1;
                 },
@@ -168,6 +178,11 @@ impl Cpu {
             }
         }
     }
+
+    fn sta(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.mem_write(addr, self.a);
+    } 
 
     fn ldx(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
