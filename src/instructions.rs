@@ -98,6 +98,12 @@ lazy_static! {
         Instruction::new(0xe1, "SBC", 2, 6, AddressingMode::IndirectX),
         Instruction::new(0xf1, "SBC", 2, 5/*+1 if page crossed */, AddressingMode::IndirectY),
 
+        Instruction::new(0x0a, "ASL", 1, 2, AddressingMode::Implied), // accumulator
+        Instruction::new(0x0a, "ASL", 1, 2, AddressingMode::ZeroPage),
+        Instruction::new(0x0a, "ASL", 1, 2, AddressingMode::ZeroPageX),
+        Instruction::new(0x0a, "ASL", 1, 2, AddressingMode::Absolute),
+        Instruction::new(0x0a, "ASL", 1, 2, AddressingMode::AbsoluteX),
+
         Instruction::new(0x48, "PHA", 1, 2, AddressingMode::Implied),
         Instruction::new(0x68, "PLA", 1, 4, AddressingMode::Implied),
         Instruction::new(0x08, "PHP", 1, 3, AddressingMode::Implied),
