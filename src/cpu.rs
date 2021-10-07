@@ -163,6 +163,7 @@ impl Cpu {
         loop {
             let opcode = self.mem_read(self.pc);
             self.pc += 1;
+            let pc_to_operand = self.pc;
 
             //println!("opcode: 0x{:X}", opcode);
             let cur_inst = instructions.get(&opcode).expect(&format!("opcode 0x{:X} is not recognized", opcode));
@@ -197,13 +198,37 @@ impl Cpu {
                 0x68 => { self.a = self.stack_pop(); }
                 0x08 => self.php(),
                 0x28 => self.plp(),
-                0x40 => self.rti(),
+                //RTI
+                0x40 => {
+                    self.stat.bits = self.stack_pop();
+                    self.stat.remove(StatFlags::BREAK);
+                    self.stat.insert(StatFlags::BREAK2);
+                    self.pc = self.stack_pop_u16();
+                }
+                //RTS
+                0x60 => {
+                    self.pc = self.stack_pop_u16() + 1;
+                }
+                // JMP absolute
+                0x4c => {
+                    let addr = self.mem_read_u16(self.pc);
+                    self.pc = addr;
+                },
+                // JSR absolute
+                0x20 => {
+                    self.stack_push_u16(self.pc + 2 - 1);
+                    let addr = self.mem_read_u16(self.pc);
+                    self.pc = addr;
+                },
+
 
                 _ => panic!("0x{:X} is not impremented", opcode),
             }
 
-            // increment pc
-            self.pc += (cur_inst.len - 1) as u16;
+            // add up pc unless current instruction is jxx
+            if pc_to_operand == self.pc {
+                self.pc += (cur_inst.len - 1) as u16;
+            }
         }
     }
 
@@ -304,14 +329,6 @@ impl Cpu {
         let low = self.stack_pop() as u16;
         let high = self.stack_pop() as u16;
         high << 8 | low
-    }
-
-    // return from interrupt
-    fn rti(&mut self) {
-        self.stat.bits = self.stack_pop();
-        self.stat.remove(StatFlags::BREAK);
-        self.stat.remove(StatFlags::BREAK2);
-        self.pc = self.stack_pop_u16();
     }
 
     fn update_zero_and_negative_flags(&mut self, result: u8) {
