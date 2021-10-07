@@ -245,6 +245,9 @@ impl Cpu {
                 0x06 | 0x16 | 0x0e | 0x1e => {
                     self.asl(&cur_inst.mode);
                 },
+                0x24 | 0x2c => {
+                    self.bit(&cur_inst.mode);
+                },
                 // SBC
                 0xe9 | 0xe5 | 0xf5 | 0xed | 0xfd | 0xf9 | 0xe1 | 0xf1 => {
                     self.sbc(&cur_inst.mode);
@@ -370,13 +373,26 @@ impl Cpu {
         self.update_zero_and_negative_flags(data);
     }
 
+    fn bit(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let data = self.mem_read(addr);
+        let and = self.a & data;
+        if and == 0 {
+            self.set_zero();
+        } else {
+            self.clear_zero();
+        }
+        self.stat.set(StatFlags::NEGATIVE, data & (1<<7) > 0);
+        self.stat.set(StatFlags::OVERFLOW, data & (1<<6) > 0);
+    }
+
     fn sbc(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let val = self.mem_read(addr);
         self.add_to_a((val as i8).wrapping_neg().wrapping_sub(1) as u8);
     }
 
-    // TODO: ignore decimal mode
+    // ignore decimal mode
     fn add_to_a(&mut self, data: u8) {
         let sum = self.a as u16 + data as u16
             + (if self.stat.contains(StatFlags::CARRY) {1} else {0});
@@ -436,6 +452,14 @@ impl Cpu {
         high << 8 | low
     }
 
+    fn set_zero(&mut self) {
+        self.stat.insert(StatFlags::ZERO);
+    }
+
+    fn clear_zero(&mut self) {
+        self.stat.remove(StatFlags::ZERO);
+    }
+
     fn set_carry(&mut self) {
         self.stat.insert(StatFlags::CARRY);
     }
@@ -447,9 +471,9 @@ impl Cpu {
 
     fn update_zero_and_negative_flags(&mut self, result: u8) {
         if result == 0 {
-            self.stat.insert(StatFlags::ZERO);
+            self.set_zero();
         } else {
-            self.stat.remove(StatFlags::ZERO);
+            self.clear_zero();
         }
 
         if result & 0b1000_0000 != 0 {

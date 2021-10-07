@@ -104,6 +104,9 @@ lazy_static! {
         Instruction::new(0x0a, "ASL", 1, 2, AddressingMode::Absolute),
         Instruction::new(0x0a, "ASL", 1, 2, AddressingMode::AbsoluteX),
 
+        Instruction::new(0x24, "BIT", 2, 3, AddressingMode::ZeroPage),
+        Instruction::new(0x2c, "BIT", 3, 4, AddressingMode::Absolute),
+
         Instruction::new(0x48, "PHA", 1, 2, AddressingMode::Implied),
         Instruction::new(0x68, "PLA", 1, 4, AddressingMode::Implied),
         Instruction::new(0x08, "PHP", 1, 3, AddressingMode::Implied),
