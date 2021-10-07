@@ -2,7 +2,7 @@
 Nintendo Entertainment System emulator
 
 # Plan
-going to implement this emulator in the following order
+Going to implement this emulator in the following order
 - CPU
 - NES ROM
 - PPU
@@ -10,6 +10,7 @@ going to implement this emulator in the following order
 - APU
 
 # Reference
+- https://wiki.nesdev.org/w/index.php?title=Nesdev_Wiki
 - http://www.6502.org/tutorials/6502opcodes.html
 - https://skilldrick.github.io/easy6502/
 
