@@ -233,6 +233,10 @@ impl Cpu {
                 0x69 | 0x65 | 0x75 | 0x6d | 0x7d | 0x79 | 0x61 | 0x71 => {
                     self.adc(&cur_inst.mode);
                 },
+                // AND
+                0x29 | 0x25 | 0x35 | 0x2d | 0x3d | 0x39 | 0x21 | 0x31 => {
+                    self.and(&cur_inst.mode);
+                }
                 // SBC
                 0xe9 | 0xe5 | 0xf5 | 0xed | 0xfd | 0xf9 | 0xe1 | 0xf1 => {
                     self.sbc(&cur_inst.mode);
@@ -325,6 +329,12 @@ impl Cpu {
         let addr = self.get_operand_address(mode);
         let val = self.mem_read(addr);
         self.add_to_a(val);
+    }
+
+    fn and(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let val = self.mem_read(addr);
+        self.a = val & self.a;
     }
 
     fn sbc(&mut self, mode: &AddressingMode) {
