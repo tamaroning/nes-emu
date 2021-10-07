@@ -38,6 +38,10 @@ lazy_static! {
         Instruction::new(0xb1, "LDA", 2, 5/*+1 if page crossed*/, AddressingMode::IndirectY),
 
         Instruction::new(0xa2, "LDX", 2, 2, AddressingMode::Immediate),
+        Instruction::new(0xa6, "LDX", 2, 3, AddressingMode::ZeroPage),
+        Instruction::new(0xb6, "LDX", 2, 4, AddressingMode::ZeroPageY),
+        Instruction::new(0xae, "LDX", 3, 4, AddressingMode::Absolute),
+        Instruction::new(0xbe, "LDX", 3, 4/*+1 if page crossed */, AddressingMode::AbsoluteY),
 
         Instruction::new(0x85, "STA", 2, 3, AddressingMode::ZeroPage),
         Instruction::new(0x95, "STA", 2, 4, AddressingMode::ZeroPageX),
