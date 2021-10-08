@@ -72,11 +72,11 @@ impl Cpu {
         }
     }
 
-    fn mem_read(&self, addr: u16) -> u8 {
+    pub fn mem_read(&self, addr: u16) -> u8 {
         self.memory[addr as usize]
     }
 
-    fn mem_read_u16(&self, pos: u16) -> u16 {
+    pub fn mem_read_u16(&self, pos: u16) -> u16 {
         let low = self.mem_read(pos) as u16;
         let high = self.mem_read(pos + 1) as u16;
         (high << 8) |  low
@@ -105,13 +105,15 @@ impl Cpu {
         self.a = 0;
         self.x = 0;
         self.stat = StatFlags::from_bits_truncate(0b100100);
-        // entry point stored at 0xFFFC
-        self.pc = self.mem_read_u16(0xFFFC);
+        // TODO: entry point stored at 0xFFFC
+        self.pc = 0x600;
+        //self.pc = self.mem_read_u16(0xFFFC);
         self.sp = STACK_RESET;
     }
 
     pub fn load(&mut self, program: Vec<u8>) {
-        self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(&program[..]);
+        // TODO: NES usually load program at 0x8000
+        self.memory[0x600..(0x600 + program.len())].copy_from_slice(&program[..]);
         self.mem_write_u16(0xFFFC, 0x8000);
     }
 
@@ -159,14 +161,22 @@ impl Cpu {
     }
 
     pub fn run(&mut self) {
+        self.run_with_callback(|_| {});
+    }
+
+    pub fn run_with_callback<F>(&mut self, mut callback: F) 
+    where F: FnMut(&mut Cpu) {
         let ref instructions: HashMap<u8, &'static instructions::Instruction> = *instructions::INSTRUCTION_MAP;
         
         loop {
+            callback(self);
+
             let opcode = self.mem_read(self.pc);
             self.pc += 1;
             let pc_to_operand = self.pc;
 
-            //println!("opcode: 0x{:X}", opcode);
+            // debug
+            //println!("PC: {:04X} opcode: 0x{:X}", self.pc, opcode);
             let cur_inst = instructions.get(&opcode).expect(&format!("opcode 0x{:X} is not recognized", opcode));
 
             match opcode {
