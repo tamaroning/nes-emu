@@ -107,21 +107,17 @@ impl Cpu {
         self.a = 0;
         self.x = 0;
         self.stat = StatFlags::from_bits_truncate(0b100100);
-        // TODO: entry point stored at 0xFFFC
-        self.pc = 0x600;
-        //self.pc = self.mem_read_u16(0xFFFC);
+        self.pc = self.mem_read_u16(0xFFFC);
         self.sp = STACK_RESET;
     }
 
     pub fn load(&mut self, program: Vec<u8>) {
-        // TODO: NES usually load program at 0x8000
         for i in 0..(program.len() as u16) {
-            self.mem_write(0x600 + i, program[i as usize]);
+            self.mem_write(0x8000 + i, program[i as usize]);
         }
-        self.mem_write_u16(0xFFFC, 0x8000);
     }
 
-    fn get_operand_address(&self, mode: &AddressingMode) -> u16 {
+    pub fn get_operand_address(&self, mode: &AddressingMode) -> u16 {
         match mode {
             &AddressingMode::Immediate => self.pc,
             &AddressingMode::ZeroPage => self.mem_read(self.pc) as u16,
@@ -173,6 +169,7 @@ impl Cpu {
         let ref instructions: HashMap<u8, &'static instructions::Instruction> = *instructions::INSTRUCTION_MAP;
         
         loop {
+            // note: callbask must be at first
             callback(self);
 
             let opcode = self.mem_read(self.pc);
@@ -744,6 +741,7 @@ impl Cpu {
 mod test {
     use super::*;
     use ines::test;
+    use trace::trace;
 
     #[test]
     fn test_0xa9_lda_immidiate_load_data() {
@@ -756,47 +754,77 @@ mod test {
 
     #[test]
     fn test_0xa9_lda_zero_flag() {
-        let bus = Bus::new(test::create_rom());
+        let mut rom = test::create_rom();
+        let prg = vec![0xa9, 0x00, 0x00];
+        for i in 0..prg.len() {
+            rom.prg_rom[i] = prg[i];
+        }
+        let bus = Bus::new(rom);
         let mut cpu = Cpu::new(bus);
-        cpu.load_and_run(vec![0xa9, 0x00, 0x00]);
-        assert!(cpu.stat.bits() & 0b0000_0010 == 0b10);
+        cpu.reset();
+        cpu.pc = 0x8000;
+        cpu.run();
+        assert!(cpu.stat.contains(StatFlags::ZERO));
     }
 
     #[test]
     fn test_0xaa_tax_move_a_to_x() {
-        let bus = Bus::new(test::create_rom());
+        let mut rom = test::create_rom();
+        let prg = vec![0xa9, 0x0a, 0xaa, 0x00];
+        for i in 0..prg.len() {
+            rom.prg_rom[i] = prg[i];
+        }
+        let bus = Bus::new(rom);
         let mut cpu = Cpu::new(bus);
-        cpu.load_and_run(vec![0xa9, 0x0a, 0xaa, 0x00]);
-
+        cpu.reset();
+        cpu.pc = 0x8000;
+        cpu.run();
         assert_eq!(cpu.x, 10)
     }
 
     #[test]
     fn test_5_ops_working_together() {
-        let bus = Bus::new(test::create_rom());
+        let mut rom = test::create_rom();
+        let prg = vec![0xa9, 0xc0, 0xaa, 0xe8, 0x00];
+        for i in 0..prg.len() {
+            rom.prg_rom[i] = prg[i];
+        }
+        let bus = Bus::new(rom);
         let mut cpu = Cpu::new(bus);
-        cpu.load_and_run(vec![0xa9, 0xc0, 0xaa, 0xe8, 0x00]);
-
+        cpu.reset();
+        cpu.pc = 0x8000;
+        cpu.run();
         assert_eq!(cpu.x, 0xc1)
     }
 
     #[test]
     fn test_inx_overflow() {
-        let bus = Bus::new(test::create_rom());
+        let mut rom = test::create_rom();
+        let prg = vec![0xa2, 0xff, 0xe8, 0xe8, 0x00];
+        for i in 0..prg.len() {
+            rom.prg_rom[i] = prg[i];
+        }
+        let bus = Bus::new(rom);
         let mut cpu = Cpu::new(bus);
-        cpu.load_and_run(vec![0xa2, 0xff, 0xe8, 0xe8, 0x00]);
-
+        cpu.reset();
+        cpu.pc = 0x8000;
+        cpu.run();
         assert_eq!(cpu.x, 1)
     }
 
     #[test]
     fn test_lda_from_memory() {
-        let bus = Bus::new(test::create_rom());
+        let mut rom = test::create_rom();
+        let prg = vec![0xa5, 0x10, 0x00];
+        for i in 0..prg.len() {
+            rom.prg_rom[i] = prg[i];
+        }
+        let bus = Bus::new(rom);
         let mut cpu = Cpu::new(bus);
+        cpu.reset();
+        cpu.pc = 0x8000;
         cpu.mem_write(0x10, 0x55);
-
-        cpu.load_and_run(vec![0xa5, 0x10, 0x00]);
-
+        cpu.run();
         assert_eq!(cpu.a, 0x55);
     }
 }

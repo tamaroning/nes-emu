@@ -3,6 +3,7 @@ mod cpu;
 mod instructions;
 mod memory;
 mod ines;
+mod trace;
 #[macro_use]
 extern crate lazy_static;
 extern crate bitflags;
@@ -18,6 +19,7 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
 
+/*
 fn handle_user_input(cpu: &mut cpu::Cpu, event_pump: &mut EventPump) {
     for event in event_pump.poll_iter() {
         match event {
@@ -75,6 +77,7 @@ fn read_screen_state(cpu: &cpu::Cpu, frame: &mut [u8; 32 * 3 * 32]) -> bool {
     }
     update
  }
+*/
 
 fn main() {
     println!("Hello NES emulator!");
@@ -101,29 +104,18 @@ fn main() {
     let mut file = File::open(path)
         .unwrap();
     let mut raw: [u8; 0x20000] = [0; 0x20000];
-    file.read(&mut raw);
+    file.read(&mut raw).unwrap();
     let raw = raw.to_vec();
     
     // load program
-    let rom = ines::Rom::analyze_raw(&raw).unwrap();
+    let mut rom = ines::Rom::analyze_raw(&raw).unwrap();
     let bus = memory::Bus::new(rom);
     let mut cpu = cpu::Cpu::new(bus);
     cpu.reset();
-
-    // graphic data copied from cpu.memory 
-    let mut screen_state = [0 as u8; 32 * 3 * 32];
+    cpu.pc = 0xc000;
 
     cpu.run_with_callback(move |cpu| {
-        handle_user_input(cpu, &mut event_pump);
-        
-        // if screen updated, render graphics
-        if read_screen_state(&cpu, &mut &mut screen_state) {
-            texture.update(None, &screen_state, 32 * 3).unwrap();
-            canvas.copy(&texture, None, None).unwrap();
-            canvas.present();
-        }
-        // 70_000 nsec = 7e-5 sec
-        ::std::thread::sleep(std::time::Duration::new(0, 10))
+        println!("{}", trace::trace(cpu));
     });
     
 
