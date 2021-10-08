@@ -202,6 +202,7 @@ lazy_static! {
         Instruction::new(0xd8, "CLD", 1, 2, AddressingMode::Implied),
         Instruction::new(0xf8, "SED", 1, 2, AddressingMode::Implied),
 
+        Instruction::new(0xea, "NOP", 1, 2, AddressingMode::Implied),
     ];
 
     pub static ref INSTRUCTION_MAP: HashMap<u8, &'static Instruction> = {

@@ -171,6 +171,7 @@ impl Cpu {
 
             match opcode {
                 // BRK
+                // TODO: correct?
                 0x00 => return,
                 // TAX
                 0xAA => {
@@ -365,7 +366,8 @@ impl Cpu {
                 0xd8 => self.stat.remove(StatFlags::DECIMAL),
                 // SED
                 0xf8 => self.stat.insert(StatFlags::DECIMAL),
-
+                // NOP
+                0xea => (),
                 _ => panic!("0x{:X} is not impremented", opcode),
             }
 
