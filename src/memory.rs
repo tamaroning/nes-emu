@@ -1,7 +1,11 @@
+use ines::Rom;
+
 const RAM: u16 = 0x0000;
 const RAM_MIRROR_END: u16 = 0x1fff;
 const PPU_REGISTERS: u16 = 0x2000;
 const PPU_REGISTERS_MIRROR_END: u16 = 0x3fff;
+const PRG_ROM: u16 = 0x8000;
+const PRG_ROM_END: u16 = 0xFFFF;
 
 //  _______________ $10000  _______________
 // | PRG-ROM       |       |               |
@@ -33,12 +37,16 @@ const PPU_REGISTERS_MIRROR_END: u16 = 0x3fff;
 
 pub struct Bus {
     // 0x800 = 2048
-    cpu_vram: [u8; 0x800]
+    cpu_vram: [u8; 0x800],
+    rom: Rom
 }
 
 impl Bus {
-    pub fn new() -> Self {
-        Bus { cpu_vram: [0; 0x800] }
+    pub fn new(rom: Rom) -> Self {
+        Bus {
+            cpu_vram: [0; 0x800],
+            rom: rom,
+        }
     }
 }
 
@@ -47,6 +55,7 @@ pub trait Mem {
     fn mem_read_u16(&self, pos: u16) -> u16;
     fn mem_write(&mut self, addr: u16, data: u8);
     fn mem_write_u16(&mut self, addr: u16, data: u16);
+    fn read_prg_rom(&self, addr: u16) -> u8;
 }
 
 impl Mem for Bus {
@@ -62,6 +71,7 @@ impl Mem for Bus {
                 let _tmp = addr & 0b00100000_00000111;
                 todo!("PPU");
             },
+            PRG_ROM ..= PRG_ROM_END => self.read_prg_rom(addr),
             _ => 0, //TODO: should not ignore
         }
     }
@@ -84,6 +94,10 @@ impl Mem for Bus {
                 let _tmp = addr & 0b00100000_00000111;
                 todo!("PPU");
             },
+            // TODO: wrtitable when cargo test
+            /* 
+            PRG_ROM ..= PRG_ROM_END => panic!("Cannot write to cartridge ROM"),
+            */
             _ => (), // TODO: should not ignore
         }
     }
@@ -93,5 +107,13 @@ impl Mem for Bus {
         let low = (data & 0xFF) as u8;
         self.mem_write(pos, low);
         self.mem_write(pos + 1, high);
+    }
+
+    fn read_prg_rom(&self, mut addr: u16) -> u8 {
+        addr -= PRG_ROM;
+        if self.rom.prg_rom.len() == 0x4000 && addr >= 0x4000 {
+            addr %= 0x4000;
+        }
+        self.rom.prg_rom[addr as usize]
     }
 }

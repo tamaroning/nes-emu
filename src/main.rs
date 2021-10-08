@@ -76,7 +76,7 @@ fn read_screen_state(cpu: &cpu::Cpu, frame: &mut [u8; 32 * 3 * 32]) -> bool {
 
 fn main() {
     println!("Hello NES emulator!");
-
+    /*
     // snake game
     let game_code = vec![
         0x20, 0x06, 0x06, 0x20, 0x38, 0x06, 0x20, 0x0d, 0x06, 0x20, 0x2a, 0x06, 0x60, 0xa9, 0x02, 0x85,
@@ -140,5 +140,6 @@ fn main() {
         // 70_000 nsec = 7e-5 sec
         ::std::thread::sleep(std::time::Duration::new(0, 10))
     });
+    */
 
 }
