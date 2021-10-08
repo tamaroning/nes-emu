@@ -55,6 +55,7 @@ pub enum AddressingMode {
     AbsoluteY,
     IndirectX,
     IndirectY,
+    Relative,
     Implied,
 }
 
@@ -153,7 +154,7 @@ impl Cpu {
                 let high = self.mem_read(ptr.wrapping_add(1) as u16);
                 (high as u16) << 8 | (low as u16)
             },
-            &AddressingMode::Implied => panic!(),
+            &AddressingMode::Implied | &AddressingMode::Relative => panic!(),
         }
     }
 
@@ -334,6 +335,36 @@ impl Cpu {
                     let addr = self.mem_read_u16(self.pc);
                     self.pc = addr;
                 },
+                // BCC
+                0x90 => self.branch(!self.stat.contains(StatFlags::CARRY)),
+                // BCS
+                0xb0 => self.branch(self.stat.contains(StatFlags::CARRY)),
+                // BEQ
+                0xf0 => self.branch(self.stat.contains(StatFlags::ZERO)),
+                // BNE
+                0xd0 => self.branch(!self.stat.contains(StatFlags::ZERO)),
+                // BPL
+                0x10 => self.branch(!self.stat.contains(StatFlags::NEGATIVE)),
+                // BMI
+                0x30 => self.branch(self.stat.contains(StatFlags::NEGATIVE)),
+                // BVC
+                0x50 => self.branch(!self.stat.contains(StatFlags::OVERFLOW)),
+                // BVS
+                0x70 => self.branch(self.stat.contains(StatFlags::OVERFLOW)),
+                // CLC
+                0x18 => self.stat.remove(StatFlags::CARRY),
+                // SEC
+                0x38 => self.stat.insert(StatFlags::CARRY),
+                // CLI
+                0x58 => self.stat.remove(StatFlags::INTERRUPT),
+                // SEI
+                0x78 => self.stat.insert(StatFlags::INTERRUPT),
+                // CLV
+                0xb8 => self.stat.remove(StatFlags::OVERFLOW),
+                // CLD
+                0xd8 => self.stat.remove(StatFlags::DECIMAL),
+                // SED
+                0xf8 => self.stat.insert(StatFlags::DECIMAL),
 
                 _ => panic!("0x{:X} is not impremented", opcode),
             }
@@ -652,6 +683,13 @@ impl Cpu {
         let low = self.stack_pop() as u16;
         let high = self.stack_pop() as u16;
         high << 8 | low
+    }
+
+    fn branch(&mut self, cond: bool) {
+        if cond {
+            let rel = self.mem_read(self.pc) as i8;
+            self.pc = self.pc.wrapping_add(1).wrapping_add(rel as u16);
+        }
     }
 
     fn set_zero(&mut self) {

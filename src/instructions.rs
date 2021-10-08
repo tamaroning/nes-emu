@@ -184,6 +184,24 @@ lazy_static! {
 
         Instruction::new(0x4c, "JMP", 3, 5, AddressingMode::Absolute),
         Instruction::new(0x20, "JSR", 3, 6, AddressingMode::Absolute),
+
+        Instruction::new(0x90, "BCC", 2, 2, AddressingMode::Relative),
+        Instruction::new(0xb0, "BCS", 2, 2, AddressingMode::Relative),
+        Instruction::new(0xf0, "BEQ", 2, 2, AddressingMode::Relative),
+        Instruction::new(0x30, "BMI", 2, 2, AddressingMode::Relative),
+        Instruction::new(0xd0, "BNE", 2, 2, AddressingMode::Relative),
+        Instruction::new(0x10, "BPL", 2, 2, AddressingMode::Relative),
+        Instruction::new(0x50, "BVC", 2, 2, AddressingMode::Relative),
+        Instruction::new(0x70, "BVS", 2, 2, AddressingMode::Relative),
+
+        Instruction::new(0x18, "CLC", 1, 2, AddressingMode::Implied),
+        Instruction::new(0x38, "SEC", 1, 2, AddressingMode::Implied),
+        Instruction::new(0x58, "CLI", 1, 2, AddressingMode::Implied),
+        Instruction::new(0x78, "SEI", 1, 2, AddressingMode::Implied),
+        Instruction::new(0xb8, "CLV", 1, 2, AddressingMode::Implied),
+        Instruction::new(0xd8, "CLD", 1, 2, AddressingMode::Implied),
+        Instruction::new(0xf8, "SED", 1, 2, AddressingMode::Implied),
+
     ];
 
     pub static ref INSTRUCTION_MAP: HashMap<u8, &'static Instruction> = {
