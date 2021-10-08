@@ -73,11 +73,12 @@ impl Mem for Bus {
             0x2000 | 0x2001 | 0x2003 | 0x2005 | 0x2006 | 0x4014 => {
                 panic!("read write only memory");
             },
-            0x2002 => todo!(),
+            0x2002 => todo!("read PPU status"),
+            0x2004 => todo!("read PPU OAM data"),
             0x2007 => self.ppu.read_data(), 
             0x2008 ..= PPU_REGISTERS_MIRROR_END => {
-                let _tmp = addr & 0b00100000_00000111;
-                todo!("PPU");
+                let mirrored = addr & 0b00100000_00000111;
+                self.mem_read(mirrored)
             },
             PRG_ROM ..= PRG_ROM_END => self.read_prg_rom(addr),
             _ => panic!("Invalid memory access")
@@ -97,15 +98,30 @@ impl Mem for Bus {
                 let lower_11_bits = addr & 0b00000111_11111111;
                 self.cpu_vram[lower_11_bits as usize] = data;
             },
-            // 0x2000 ~ 0x3fff used as PPU memory
-            0x2000 ..= PPU_REGISTERS_MIRROR_END => {
-                let _tmp = addr & 0b00100000_00000111;
-                todo!("PPU");
+            0x2000 => {
+                todo!("write to PPU ctrl");
             },
-            // TODO: wrtitable when cargo test
-            /* 
-            PRG_ROM ..= PRG_ROM_END => panic!("Cannot write to cartridge ROM"),
-            */
+            0x2001 => {
+                todo!("write to PPU mask");
+            },
+            0x2002 => panic!("write to PPU status register"),
+            0x2003 => {
+                todo!("write to PPU OAM addr");
+            },
+            0x2004 => {
+                todo!("write tp ")
+            },
+            0x2006 => {
+                todo!("write to PPU addr reg")
+            },
+            0x2007 => {
+                todo!("write PPU data reg")
+            },
+            0x2008 ..= PPU_REGISTERS_MIRROR_END => {
+                let mirrored = addr & 0b00100000_00000111;
+                self.mem_write(mirrored, data);
+            },
+            0x8000 ..=0xffff => panic!("cannot write to program ROM"),
             _ => (), // TODO: should not ignore
         }
     }
