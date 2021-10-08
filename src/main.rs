@@ -2,6 +2,7 @@
 mod cpu;
 mod instructions;
 mod memory;
+mod ines;
 #[macro_use]
 extern crate lazy_static;
 extern crate bitflags;
