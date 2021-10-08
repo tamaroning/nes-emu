@@ -2,21 +2,23 @@
 use std::collections::HashMap;
 use bitflags::bitflags;
 use instructions;
+use memory::Bus;
+use memory::Mem;
 
-/*
-7  bit  0
----- ----
-NVss DIZC
-|||| ||||
-|||| |||+- Carry
-|||| ||+-- Zero
-|||| |+--- Interrupt Disable
-|||| +---- Decimal (no effect on NES)
-||++------ No CPU effect, see: the B flag
-|+-------- Overflow
-+--------- Negative
-*/
 bitflags!{
+/*
+    7  bit  0
+    ---- ----
+    NVss DIZC
+    |||| ||||
+    |||| |||+- Carry
+    |||| ||+-- Zero
+    |||| |+--- Interrupt Disable
+    |||| +---- Decimal (no effect on NES)
+    ||++------ No CPU effect, see: the B flag
+    |+-------- Overflow
+    +--------- Negative
+*/
     pub struct StatFlags: u8 {
         const NEGATIVE  = 0b10000000;
         const OVERFLOW  = 0b01000000;
@@ -40,8 +42,7 @@ pub struct Cpu {
     pub x: u8,
     pub y: u8,
     pub stat: StatFlags,
-    // 64 KiB memory
-    memory: [u8; 0x10000],
+    pub bus: Bus,
 }
 
 #[derive(Debug)]
@@ -59,6 +60,24 @@ pub enum AddressingMode {
     Implied,
 }
 
+impl Mem for Cpu {
+    fn mem_read(&self, addr: u16) -> u8 {
+        self.bus.mem_read(addr)
+    }
+
+    fn mem_read_u16(&self, pos: u16) -> u16 {
+        self.bus.mem_read_u16(pos)
+    }
+
+    fn mem_write(&mut self, addr: u16, data: u8) {
+        self.bus.mem_write(addr, data);
+    }
+
+    fn mem_write_u16(&mut self, addr: u16, data: u16) {
+        self.bus.mem_write_u16(addr, data)
+    }
+}
+
 impl Cpu {
     pub fn new() -> Self {
         Cpu {
@@ -68,29 +87,8 @@ impl Cpu {
             x: 0,
             y: 0,
             stat: StatFlags::from_bits_truncate(0b100100),
-            memory: [0; 0x10000],
+            bus: Bus::new(),
         }
-    }
-
-    pub fn mem_read(&self, addr: u16) -> u8 {
-        self.memory[addr as usize]
-    }
-
-    pub fn mem_read_u16(&self, pos: u16) -> u16 {
-        let low = self.mem_read(pos) as u16;
-        let high = self.mem_read(pos + 1) as u16;
-        (high << 8) |  low
-    }
-
-    pub fn mem_write(&mut self, addr: u16, data: u8) {
-        self.memory[addr as usize] = data;
-    }
-
-    pub fn mem_write_u16(&mut self, pos: u16, data: u16) {
-        let high = (data >> 8) as u8;
-        let low = (data & 0xFF) as u8;
-        self.mem_write(pos, low);
-        self.mem_write(pos + 1, high);
     }
 
     pub fn load_and_run(&mut self, program: Vec<u8>) {
@@ -113,7 +111,9 @@ impl Cpu {
 
     pub fn load(&mut self, program: Vec<u8>) {
         // TODO: NES usually load program at 0x8000
-        self.memory[0x600..(0x600 + program.len())].copy_from_slice(&program[..]);
+        for i in 0..(program.len() as u16) {
+            self.mem_write(0x600 + i, program[i as usize]);
+        }
         self.mem_write_u16(0xFFFC, 0x8000);
     }
 

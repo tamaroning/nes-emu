@@ -1,12 +1,15 @@
 #![allow(dead_code)]
 mod cpu;
 mod instructions;
+mod memory;
 #[macro_use]
 extern crate lazy_static;
 extern crate bitflags;
 extern crate sdl2;
 extern crate rand;
 use rand::Rng;
+use cpu::Cpu;
+use memory::Mem;
 use sdl2::event::Event;
 use sdl2::EventPump;
 use sdl2::keyboard::Keycode;
@@ -142,7 +145,7 @@ fn main() {
 
 #[cfg(test)]
 mod cpu_test {
-    use cpu::Cpu;
+    use super::*;
 
     #[test]
     fn test_0xa9_lda_immidiate_load_data() {
