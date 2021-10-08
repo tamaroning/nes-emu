@@ -1,8 +1,8 @@
 use ines::Rom;
+use ppu::Ppu;
 
 const RAM: u16 = 0x0000;
 const RAM_MIRROR_END: u16 = 0x1fff;
-const PPU_REGISTERS: u16 = 0x2000;
 const PPU_REGISTERS_MIRROR_END: u16 = 0x3fff;
 const PRG_ROM: u16 = 0x8000;
 const PRG_ROM_END: u16 = 0xFFFF;
@@ -38,45 +38,53 @@ const PRG_ROM_END: u16 = 0xFFFF;
 pub struct Bus {
     // 0x800 = 2048
     cpu_vram: [u8; 0x800],
-    rom: Rom
+    prg_rom: Vec<u8>,
+    ppu: Ppu,
 }
 
 impl Bus {
     pub fn new(rom: Rom) -> Self {
+        let ppu = Ppu::new(rom.chr_rom, rom.mirroring);
         Bus {
             cpu_vram: [0; 0x800],
-            rom: rom,
+            prg_rom: rom.prg_rom,
+            ppu: ppu,
         }
     }
 }
 
 pub trait Mem {
-    fn mem_read(&self, addr: u16) -> u8;
-    fn mem_read_u16(&self, pos: u16) -> u16;
+    fn mem_read(&mut self, addr: u16) -> u8;
+    fn mem_read_u16(&mut self, pos: u16) -> u16;
     fn mem_write(&mut self, addr: u16, data: u8);
     fn mem_write_u16(&mut self, addr: u16, data: u16);
     fn read_prg_rom(&self, addr: u16) -> u8;
 }
 
 impl Mem for Bus {
-    fn mem_read(&self, addr: u16) -> u8 {
+    fn mem_read(&mut self, addr: u16) -> u8 {
         match addr {
             // 0x0000 ~ 0x1fff used as RAM
             RAM ..= RAM_MIRROR_END => {
                 let lower_11_bits = addr & 0b00000111_11111111;
                 self.cpu_vram[lower_11_bits as usize]
             },
-            // 0x2000 ~ 0x3fff used as PPU memory
-            PPU_REGISTERS ..= PPU_REGISTERS_MIRROR_END => {
+            // write only
+            0x2000 | 0x2001 | 0x2003 | 0x2005 | 0x2006 | 0x4014 => {
+                panic!("read write only memory");
+            },
+            0x2002 => todo!(),
+            0x2007 => self.ppu.read_data(), 
+            0x2008 ..= PPU_REGISTERS_MIRROR_END => {
                 let _tmp = addr & 0b00100000_00000111;
                 todo!("PPU");
             },
             PRG_ROM ..= PRG_ROM_END => self.read_prg_rom(addr),
-            _ => 0, //TODO: should not ignore
+            _ => panic!("Invalid memory access")
         }
     }
     
-    fn mem_read_u16(&self, pos: u16) -> u16 {
+    fn mem_read_u16(&mut self, pos: u16) -> u16 {
         let low = self.mem_read(pos) as u16;
         let high = self.mem_read(pos + 1) as u16;
         (high << 8) |  low
@@ -90,7 +98,7 @@ impl Mem for Bus {
                 self.cpu_vram[lower_11_bits as usize] = data;
             },
             // 0x2000 ~ 0x3fff used as PPU memory
-            PPU_REGISTERS ..= PPU_REGISTERS_MIRROR_END => {
+            0x2000 ..= PPU_REGISTERS_MIRROR_END => {
                 let _tmp = addr & 0b00100000_00000111;
                 todo!("PPU");
             },
@@ -111,9 +119,9 @@ impl Mem for Bus {
 
     fn read_prg_rom(&self, mut addr: u16) -> u8 {
         addr -= PRG_ROM;
-        if self.rom.prg_rom.len() == 0x4000 && addr >= 0x4000 {
+        if self.prg_rom.len() == 0x4000 && addr >= 0x4000 {
             addr %= 0x4000;
         }
-        self.rom.prg_rom[addr as usize]
+        self.prg_rom[addr as usize]
     }
 }

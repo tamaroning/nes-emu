@@ -17,6 +17,7 @@ pub struct Ppu {
     pub mirroring: Mirroring,
     pub ctrl: ControlRegister,
     addr: AddrRegister,
+    internal_buf: u8,
 }
 
 impl Ppu {
@@ -29,6 +30,7 @@ impl Ppu {
             mirroring: mirroring,
             ctrl: ControlRegister::new(),
             addr: AddrRegister::new(),
+            internal_buf: 0,
         }
     }
 
@@ -40,19 +42,31 @@ impl Ppu {
         self.addr.inc(self.ctrl.inc_vram_addr());
     }
 
-    fn read_data(&mut self) -> u8 {
+    pub fn read_data(&mut self) -> u8 {
         let addr = self.addr.get();
         self.inc_vram_addr();
 
         match addr {
-            0x0000 ..= 0x1fff => todo!(),
-            0x2000 ..= 0x2fff => todo!(),
+            0x0000 ..= 0x1fff => {
+                let res = self.internal_buf;
+                self.internal_buf = self.chr_rom[addr as usize];
+                res
+            },
+            0x2000 ..= 0x2fff => {
+                let res = self.internal_buf;
+                self.internal_buf = self.vram[self.mirror_vram_addr(addr) as usize];
+                res
+            },
             0x3000 ..= 0x3eff => panic!("unexpected"),
             0x3f00 ..= 0x3fff => {
                 self.palette_table[(addr - 0x3f00) as usize]
             }
             _ => panic!("unexpected"),
         }
+    }
+
+    pub fn mirror_vram_addr(&self, addr: u16) -> u16 {
+        todo!();
     }
 }
 
