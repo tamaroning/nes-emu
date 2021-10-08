@@ -18,6 +18,7 @@ use sdl2::EventPump;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
+use sdl2::sys::exit;
 
 /*
 fn handle_user_input(cpu: &mut cpu::Cpu, event_pump: &mut EventPump) {
@@ -80,9 +81,14 @@ fn read_screen_state(cpu: &cpu::Cpu, frame: &mut [u8; 32 * 3 * 32]) -> bool {
 */
 
 fn main() {
-    println!("Hello NES emulator!");
+    println!("NES emulator");
     let args: Vec<String> = env::args().collect();
     
+    if args.len() < 2 {
+        println!("usage: nes-emu <file path>");
+        std::process::exit(0);
+    }
+
     // init sdl2
     let sdl_context = sdl2::init().unwrap();
     let video_subsys = sdl_context.video().unwrap();
@@ -115,6 +121,8 @@ fn main() {
     cpu.pc = 0xc000;
 
     cpu.run_with_callback(move |cpu| {
+        let opcode = cpu.mem_read(cpu.pc);
+        println!("{:X}", opcode);
         println!("{}", trace::trace(cpu));
     });
     
