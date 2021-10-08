@@ -341,6 +341,18 @@ impl Cpu {
                     let addr = self.mem_read_u16(self.pc);
                     self.pc = addr;
                 },
+                // JMP Indirect
+                0x6c => {
+                    let addr = self.mem_read_u16(self.pc);
+                    let indirect_ref = if addr & 0x00ff == 0x00ff {
+                        let low = self.mem_read(addr);
+                        let high = self.mem_read(addr & 0xFF00);
+                        (high as u16) << 8 | (low as u16)
+                    } else {
+                        self.mem_read_u16(addr)
+                    };
+                    self.pc = indirect_ref;
+                }
                 // JSR absolute
                 0x20 => {
                     self.stack_push_u16(self.pc + 2 - 1);

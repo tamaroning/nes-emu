@@ -183,6 +183,7 @@ lazy_static! {
         Instruction::new(0x60, "RTS", 1, 6, AddressingMode::Implied),
 
         Instruction::new(0x4c, "JMP", 3, 5, AddressingMode::Absolute),
+        Instruction::new(0x6c, "JMP", 3, 5, AddressingMode::Implied),
         Instruction::new(0x20, "JSR", 3, 6, AddressingMode::Absolute),
 
         Instruction::new(0x90, "BCC", 2, 2, AddressingMode::Relative),
