@@ -4,6 +4,7 @@ mod instructions;
 mod memory;
 mod ines;
 mod trace;
+mod ppu;
 #[macro_use]
 extern crate lazy_static;
 extern crate bitflags;

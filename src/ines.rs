@@ -1,3 +1,4 @@
+use ppu::Mirroring;
 /*
     iNES 1.0 format is as follows
     - starts with 16 bytes NES header
@@ -17,13 +18,6 @@ pub struct Rom {
     pub chr_rom: Vec<u8>,
     pub mapper: u8,
     pub mirroring: Mirroring,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum Mirroring {
-    Vertical,
-    Horizontal,
-    FourScreen,
 }
 
 impl Rom {
