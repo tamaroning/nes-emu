@@ -69,6 +69,7 @@ impl Rom {
     }
 }
 
+#[cfg(test)]
 pub mod test {
     use super::*;
     struct TestRom {

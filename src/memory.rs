@@ -62,7 +62,7 @@ impl Mem for Bus {
                 let _tmp = addr & 0b00100000_00000111;
                 todo!("PPU");
             },
-            _ => (0), //TODO: should not ignore
+            _ => 0, //TODO: should not ignore
         }
     }
     
