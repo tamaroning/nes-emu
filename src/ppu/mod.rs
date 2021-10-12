@@ -81,6 +81,26 @@ impl Ppu {
         self.addr.inc(self.ctrl.inc_vram_addr());
     }
 
+    fn write_to_data(&mut self, value: u8) {
+        let addr = self.addr.get();
+        match addr {
+            0 ..= 0x1fff => panic!("Cannot write to character ROM"),
+            0x2000 ..= 0x2fff => {
+                self.vram[self.mirror_vram_addr(addr) as usize] = value;
+            },
+            0x3000 ..= 0x3eff => unimplemented!("Shouldn't write here"),
+            0x3f10 | 0x3f14 | 0x3f18 | 0x3f1c => {
+                let origin = addr - 0x10;
+                self.palette_table[(origin - 0x3f00) as usize] = value;
+            },
+            0x3f00 ..= 0x3fff => {
+                self.palette_table[(addr - 0x3f00) as usize] = value;
+            },
+            _ => panic!("Unexpected accesss"),
+        }
+        self.inc_vram_addr();
+    }
+
     pub fn read_data(&mut self) -> u8 {
         // temporary buffer used to keep the value
         // that is read during the previous read request
@@ -98,7 +118,11 @@ impl Ppu {
                 self.internal_buf = self.vram[self.mirror_vram_addr(addr) as usize];
                 res
             },
-            0x3000 ..= 0x3eff => panic!("unexpected"),
+            0x3000 ..= 0x3eff => panic!("Unexpected access"),
+            0x3f10 | 0x3f14 | 0x3f18 | 0x3f1c => {
+                let origin = addr - 0x10;
+                self.palette_table[(origin - 0x3f00) as usize]
+            },
             0x3f00 ..= 0x3fff => {
                 self.palette_table[(addr - 0x3f00) as usize]
             }
