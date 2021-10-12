@@ -82,6 +82,28 @@ impl Mem for Cpu {
     }
 }
 
+mod interrupt {
+    #[derive(PartialEq, Eq)]
+    pub enum InterruptType {
+        NMI,
+    }
+
+    #[derive(PartialEq, Eq)]
+    pub(super) struct Interrupt {
+        pub(super) ty: InterruptType,
+        pub(super) vector_addr: u16,
+        pub(super) b_flag_mask: u8,
+        pub(super) cpu_cycles: u8,
+    }
+
+    pub(super) const NMI: Interrupt = Interrupt {
+        ty: InterruptType::NMI,
+        vector_addr: 0xfffa,
+        b_flag_mask: 0b00100000,
+        cpu_cycles: 2,
+    };
+}
+
 impl Cpu {
     pub fn new(bus: Bus) -> Self {
         Cpu {
@@ -115,6 +137,17 @@ impl Cpu {
         for i in 0..(program.len() as u16) {
             self.mem_write(0x8000 + i, program[i as usize]);
         }
+    }
+
+    fn interrupt(&mut self, interrupt: interrupt:: Interrupt) {
+        self.stack_push_u16(self.pc);
+        let mut stat = self.stat.clone();
+        stat.set(StatFlags::BREAK, interrupt.b_flag_mask & 0b010000 == 1);
+        stat.set(StatFlags::BREAK2, interrupt.b_flag_mask & 0b100000 == 1);
+        self.stack_push(stat.bits);
+        self.stat.insert(StatFlags::INTERRUPT_DISABLE);
+        self.bus.tick(interrupt.cpu_cycles);
+        self.pc = self.mem_read_u16(interrupt.vector_addr);
     }
 
     pub fn get_operand_address(&mut self, mode: &AddressingMode) -> u16 {
@@ -171,7 +204,7 @@ impl Cpu {
         loop {
             // check interruptions
             if let Some(_nmi) = self.bus.poll_nmi_status() {
-                self.interrupt_nmi();
+                self.interrupt(interrupt::NMI);
             }
             callback(self);
 
@@ -971,18 +1004,6 @@ impl Cpu {
         } else {
             self.stat.remove(StatFlags::NEGATIVE);
         }
-    }
-
-    fn interrupt_nmi(&mut self) {
-        self.stack_push_u16(self.pc);
-        let mut stat = self.stat.clone();
-        stat.set(StatFlags::BREAK, false);
-        stat.set(StatFlags::BREAK2, true);
-
-        self.stack_push(stat.bits);
-        self.stat.insert(StatFlags::INTERRUPT_DISABLE);
-        self.bus.tick(2);
-        self.pc = self.mem_read_u16(0xfffa);
     }
 }
 
