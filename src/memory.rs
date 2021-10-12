@@ -109,13 +109,13 @@ impl Mem for Bus {
                 todo!("write to PPU OAM addr");
             },
             0x2004 => {
-                todo!("write tp ")
+                todo!("write to OAM data")
             },
             0x2006 => {
                 self.ppu.write_to_ppu_addr(data);
             },
             0x2007 => {
-                todo!("write PPU data reg")
+                self.ppu.write_to_data(data);
             },
             0x2008 ..= PPU_REGISTERS_MIRROR_END => {
                 let mirrored = addr & 0b00100000_00000111;

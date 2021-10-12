@@ -81,7 +81,7 @@ impl Ppu {
         self.addr.inc(self.ctrl.inc_vram_addr());
     }
 
-    fn write_to_data(&mut self, value: u8) {
+    pub fn write_to_data(&mut self, value: u8) {
         let addr = self.addr.get();
         match addr {
             0 ..= 0x1fff => panic!("Cannot write to character ROM"),
