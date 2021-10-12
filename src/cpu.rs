@@ -975,9 +975,16 @@ mod test {
 
     #[test]
     fn test_0xa9_lda_immidiate_load_data() {
-        let bus = Bus::new(test::create_rom());
+        let mut rom = test::create_rom();
+        let prg = vec![0xa9, 0x05, 0x00];
+        for i in 0..prg.len() {
+            rom.prg_rom[i] = prg[i];
+        }
+        let bus = Bus::new(rom);
         let mut cpu = Cpu::new(bus);
-        cpu.load_and_run(vec![0xa9, 0x05, 0x00]);
+        cpu.reset();
+        cpu.pc = 0x8000;
+        cpu.run();
         assert!(cpu.stat.bits() & 0b0000_0010 == 0b00);
         assert!(cpu.stat.bits() & 0b1000_0000 == 0);
     }
