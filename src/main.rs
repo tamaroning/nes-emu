@@ -5,6 +5,8 @@ mod memory;
 mod ines;
 mod trace;
 mod ppu;
+mod tile;
+mod render;
 #[macro_use]
 extern crate lazy_static;
 extern crate bitflags;
@@ -94,17 +96,17 @@ fn main() {
     let sdl_context = sdl2::init().unwrap();
     let video_subsys = sdl_context.video().unwrap();
     let window = video_subsys
-        .window("test", 320, 320)
+        .window("test", 256 * 3, 240 * 3)
         .position_centered()
         .build().unwrap();
     let mut canvas = window.into_canvas().present_vsync().build().unwrap();
     let mut event_pump = sdl_context.event_pump().unwrap();
-    canvas.set_scale(10.0, 10.0).unwrap();
+    canvas.set_scale(3.0, 3.0).unwrap();
 
     // create texture
     let creator = canvas.texture_creator();
     let mut texture = creator
-        .create_texture_target(PixelFormatEnum::RGB24, 32, 32).unwrap();
+        .create_texture_target(PixelFormatEnum::RGB24,256, 240).unwrap();
     
     // open nes file
     let path = Path::new(args[1].as_str());
@@ -115,17 +117,29 @@ fn main() {
     let raw = raw.to_vec();
     
     // load program
-    let mut rom = ines::Rom::analyze_raw(&raw).unwrap();
+    let rom = ines::Rom::analyze_raw(&raw).unwrap();
+    for i in 0..=250 {
+        let x: i32 = (i % 16);
+        let y: i32 = ((i - x)/16);
+        let mut tile_frame = tile::show_tile(&rom.chr_rom, 1, i as usize);
+        texture.update(sdl2::rect::Rect::new(x*9, y*9, 8, 8), &tile_frame.data, 256 * 3).unwrap();
+    }
+    canvas.copy(&texture, None, None).unwrap();
+    canvas.present();
+
     let bus = memory::Bus::new(rom);
     let mut cpu = cpu::Cpu::new(bus);
     cpu.reset();
-    cpu.pc = 0xc000;
 
+    loop {}
+
+    /*
     cpu.run_with_callback(move |cpu| {
-        let opcode = cpu.mem_read(cpu.pc);
-        println!("{:X}", opcode);
-        println!("{}", trace::trace(cpu));
+        // let opcode = cpu.mem_read(cpu.pc);
+        // println!("{:X}", opcode);
+        // println!("{}", trace::trace(cpu));
     });
+    */
     
 
 }
