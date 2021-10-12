@@ -73,7 +73,7 @@ impl Mem for Bus {
             0x2000 | 0x2001 | 0x2003 | 0x2005 | 0x2006 | 0x4014 => {
                 panic!("read write only memory");
             },
-            0x2002 => todo!("read PPU status"),
+            0x2002 => self.ppu.read_status(),
             0x2004 => todo!("read PPU OAM data"),
             0x2007 => self.ppu.read_data(), 
             0x2008 ..= PPU_REGISTERS_MIRROR_END => {
@@ -104,7 +104,7 @@ impl Mem for Bus {
             0x2001 => {
                 self.ppu.write_to_mask(data);
             },
-            0x2002 => panic!("write to PPU status register"),
+            0x2002 => panic!("Cannot write to PPU status register"),
             0x2003 => {
                 todo!("write to PPU OAM addr");
             },
@@ -112,7 +112,7 @@ impl Mem for Bus {
                 todo!("write tp ")
             },
             0x2006 => {
-                todo!("write to PPU addr reg")
+                self.ppu.write_to_ppu_addr(data);
             },
             0x2007 => {
                 todo!("write PPU data reg")

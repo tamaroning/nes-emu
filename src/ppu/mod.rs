@@ -1,9 +1,8 @@
-#[macro_use]
-use bitflags::bitflags;
-use sdl2::sys::SDL_MasksToPixelFormatEnum;
 mod address;
 mod mask;
 mod control;
+mod status;
+mod scroll;
 
 // PPU Memory Map
 //  _______________  $FFFF
@@ -33,9 +32,11 @@ pub struct Ppu {
     pub vram: [u8; 2048],
     pub oam: [u8; 256],
     pub mirroring: Mirroring,
-    pub ctrl: control::ControlRegister,
+    ctrl: control::ControlRegister,
     mask: mask::MaskRegister,
     addr: address::AddrRegister,
+    stat: status::StatusRegister,
+    scroll: scroll::ScrollRegister,
     internal_buf: u8,
 }
 
@@ -50,6 +51,8 @@ impl Ppu {
             ctrl: control::ControlRegister::new(),
             mask: mask::MaskRegister::new(),
             addr: address::AddrRegister::new(),
+            stat: status::StatusRegister::new(),
+            scroll: scroll::ScrollRegister::new(),
             internal_buf: 0,
         }
     }
@@ -62,8 +65,16 @@ impl Ppu {
         self.mask.update(value);
     }
 
-    fn write_to_ppu_addr(&mut self, value: u8) {
+    pub fn write_to_ppu_addr(&mut self, value: u8) {
         self.addr.update(value);
+    }
+
+    pub fn read_status(&mut self) -> u8 {
+        let data = self.stat.snapshot();
+        self.stat.clear_vblank_status();
+        self.addr.reset_latch();
+        self.scroll.reset_latch();
+        data
     }
 
     fn inc_vram_addr(&mut self) {
