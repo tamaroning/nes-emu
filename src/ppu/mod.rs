@@ -39,6 +39,10 @@ pub struct Ppu {
     stat: status::StatusRegister,
     scroll: scroll::ScrollRegister,
     internal_buf: u8,
+    // manage tick
+    scanline: u16,
+    cycles: usize,
+    pub nmi_interrupt: Option<u8>,
 }
 
 impl Ppu {
@@ -56,11 +60,19 @@ impl Ppu {
             stat: status::StatusRegister::new(),
             scroll: scroll::ScrollRegister::new(),
             internal_buf: 0,
+            scanline: 0,
+            cycles: 0,
+            nmi_interrupt: None,
         }
     }
 
     pub fn write_to_ctrl(&mut self, value: u8) {
+        let prev_nmi_status = self.ctrl.generate_vbalnk_nmi();
         self.ctrl.update(value);
+        if !prev_nmi_status && self.ctrl.generate_vbalnk_nmi()
+            && self.stat.is_in_vblank() {
+            self.nmi_interrupt = Some(1);
+        }
     }
 
     pub fn write_to_mask(&mut self, value: u8) {
@@ -164,5 +176,32 @@ impl Ppu {
             (Mirroring::Horizontal, 3) => vram_index - 0x800,
             _ => vram_index,
         }
+    }
+
+    pub fn tick(&mut self, cycles: u8) -> bool {
+        self.cycles += cycles as usize;
+        if self.cycles >= 341 {
+            self.cycles -= 341;
+            self.scanline += 1;
+            // must trigger NMI interruption and refresh screen
+            // while scanline is in range 241 ~ 262
+            if self.scanline == 241 {
+                if self.ctrl.generate_vbalnk_nmi() {
+                    self.stat.set_vblank_status(true);
+                    self.stat.set_sprite_zero_hit(false);
+                    if self.ctrl.generate_vbalnk_nmi() {
+                        self.nmi_interrupt = Some(1);
+                    }
+                }
+            }
+            if self.scanline >= 262 {
+                self.scanline = 0;
+                self.nmi_interrupt = None;
+                self.stat.set_sprite_zero_hit(false);
+                self.stat.clear_vblank_status();
+                return true;
+            }
+        }
+        return false;
     }
 }

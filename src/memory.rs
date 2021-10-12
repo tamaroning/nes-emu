@@ -40,6 +40,7 @@ pub struct Bus {
     cpu_vram: [u8; 0x800],
     prg_rom: Vec<u8>,
     ppu: Ppu,
+    cycles: usize,
 }
 
 impl Bus {
@@ -49,8 +50,19 @@ impl Bus {
             cpu_vram: [0; 0x800],
             prg_rom: rom.prg_rom,
             ppu: ppu,
+            cycles: 0,
         }
     }
+
+    pub fn tick(&mut self, cycles: u8) {
+        self.cycles += cycles as usize;
+        // PPU clock is 3 times faster than CPU clock
+        self.ppu.tick(cycles * 3);
+    }
+
+    pub fn poll_nmi_status(&mut self) -> Option<u8> {
+        self.ppu.nmi_interrupt.take()
+    } 
 }
 
 pub trait Mem {

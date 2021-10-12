@@ -25,7 +25,7 @@ bitflags!{
         const BREAK2    = 0b00100000;
         const BREAK     = 0b00010000;
         const DECIMAL   = 0b00001000;
-        const INTERRUPT = 0b00000100;
+        const INTERRUPT_DISABLE = 0b00000100;
         const ZERO      = 0b00000010;
         const CARRY     = 0b00000001;
     }
@@ -169,7 +169,10 @@ impl Cpu {
         let ref instructions: HashMap<u8, &'static instructions::Instruction> = *instructions::INSTRUCTION_MAP;
         
         loop {
-            // note: callbask must be at first
+            // check interruptions
+            if let Some(_nmi) = self.bus.poll_nmi_status() {
+                self.interrupt_nmi();
+            }
             callback(self);
 
             let opcode = self.mem_read(self.pc);
@@ -380,9 +383,9 @@ impl Cpu {
                 // SEC
                 0x38 => self.stat.insert(StatFlags::CARRY),
                 // CLI
-                0x58 => self.stat.remove(StatFlags::INTERRUPT),
+                0x58 => self.stat.remove(StatFlags::INTERRUPT_DISABLE),
                 // SEI
-                0x78 => self.stat.insert(StatFlags::INTERRUPT),
+                0x78 => self.stat.insert(StatFlags::INTERRUPT_DISABLE),
                 // CLV
                 0xb8 => self.stat.remove(StatFlags::OVERFLOW),
                 // CLD
@@ -578,6 +581,10 @@ impl Cpu {
                 },
                 //_ => panic!("0x{:X} is not impremented", opcode),
             }
+
+            // notify PPU about ticks the current instruction took
+            // TODO: support variable cycles isntructions (BNE etc.)
+            self.bus.tick(cur_inst.cycles);
 
             // add up pc unless current instruction is jxx
             if pc_to_operand == self.pc {
@@ -964,6 +971,18 @@ impl Cpu {
         } else {
             self.stat.remove(StatFlags::NEGATIVE);
         }
+    }
+
+    fn interrupt_nmi(&mut self) {
+        self.stack_push_u16(self.pc);
+        let mut stat = self.stat.clone();
+        stat.set(StatFlags::BREAK, false);
+        stat.set(StatFlags::BREAK2, true);
+
+        self.stack_push(stat.bits);
+        self.stat.insert(StatFlags::INTERRUPT_DISABLE);
+        self.bus.tick(2);
+        self.pc = self.mem_read_u16(0xfffa);
     }
 }
 
