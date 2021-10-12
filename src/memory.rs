@@ -99,10 +99,10 @@ impl Mem for Bus {
                 self.cpu_vram[lower_11_bits as usize] = data;
             },
             0x2000 => {
-                todo!("write to PPU ctrl");
+                self.ppu.write_to_ctrl(data);
             },
             0x2001 => {
-                todo!("write to PPU mask");
+                self.ppu.write_to_mask(data);
             },
             0x2002 => panic!("write to PPU status register"),
             0x2003 => {
