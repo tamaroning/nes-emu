@@ -30,7 +30,8 @@ pub struct Ppu {
     pub chr_rom: Vec<u8>,
     pub palette_table: [u8; 32],
     pub vram: [u8; 2048],
-    pub oam: [u8; 256],
+    pub oam_data: [u8; 256],
+    pub oam_addr: u8,
     pub mirroring: Mirroring,
     ctrl: control::ControlRegister,
     mask: mask::MaskRegister,
@@ -46,7 +47,8 @@ impl Ppu {
             chr_rom: chr_rom,
             palette_table: [0; 32],
             vram: [0; 2048],
-            oam: [0; 256],
+            oam_data: [0; 256],
+            oam_addr: 0,
             mirroring: mirroring,
             ctrl: control::ControlRegister::new(),
             mask: mask::MaskRegister::new(),
@@ -67,6 +69,19 @@ impl Ppu {
 
     pub fn write_to_ppu_addr(&mut self, value: u8) {
         self.addr.update(value);
+    }
+
+    pub fn write_to_oam_addr(&mut self, value: u8) {
+        self.oam_addr = value;
+    }
+
+    pub fn write_to_oam_data(&mut self, value: u8) {
+        self.oam_data[self.oam_addr as usize] = value;
+        self.oam_addr = self.oam_addr.wrapping_add(1);
+    }
+
+    pub fn read_oam_data(&self) -> u8 {
+        self.oam_data[self.oam_addr as usize]
     }
 
     pub fn read_status(&mut self) -> u8 {

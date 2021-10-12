@@ -45,4 +45,50 @@ impl ControlRegister {
     pub fn update(&mut self, data: u8) {
         self.bits = data;
     }
+
+    pub fn nametable_addr(&self) -> u16 {
+        match self.bits & 0b11 {
+            0 => 0x2000,
+            1 => 0x2400,
+            2 => 0x2800,
+            3 => 0x2c00,
+            _ => panic!(),
+        }
+    }
+
+    pub fn sprite_pattern_addr(&self) -> u16 {
+        if !self.contains(ControlRegister::SPRITE_PATTERN_ADDR) {
+            0
+        } else {
+            0x1000
+        }
+    }
+
+    pub fn bkgnd_pattern_addr(&self) -> u16 {
+        if !self.contains(ControlRegister::BACKROUND_PATTERN_ADDR) {
+            0
+        } else {
+            0x1000
+        }
+    }
+
+    pub fn sprite_size(&self) -> u8 {
+        if !self.contains(ControlRegister::SPRITE_SIZE) {
+            8
+        } else {
+            16
+        }
+    }
+
+    pub fn master_slave_select(&self) -> u8 {
+        if !self.contains(ControlRegister::SPRITE_SIZE) {
+            0
+        } else {
+            1
+        }
+    }
+
+    pub fn generate_vbalnk_nmi(&self) -> bool {
+        return self.contains(ControlRegister::GENERATE_NMI);
+    }
 }

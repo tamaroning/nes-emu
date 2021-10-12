@@ -74,7 +74,7 @@ impl Mem for Bus {
                 panic!("read write only memory");
             },
             0x2002 => self.ppu.read_status(),
-            0x2004 => todo!("read PPU OAM data"),
+            0x2004 => self.ppu.read_oam_data(),
             0x2007 => self.ppu.read_data(), 
             0x2008 ..= PPU_REGISTERS_MIRROR_END => {
                 let mirrored = addr & 0b00100000_00000111;
@@ -106,10 +106,10 @@ impl Mem for Bus {
             },
             0x2002 => panic!("Cannot write to PPU status register"),
             0x2003 => {
-                todo!("write to PPU OAM addr");
+                self.ppu.write_to_oam_addr(data);
             },
             0x2004 => {
-                todo!("write to OAM data")
+                self.ppu.write_to_oam_data(data);
             },
             0x2006 => {
                 self.ppu.write_to_ppu_addr(data);
