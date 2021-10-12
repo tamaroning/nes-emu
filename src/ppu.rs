@@ -1,6 +1,20 @@
 #[macro_use]
 use bitflags::bitflags;
 
+// PPU Memory Map
+//  _______________  $FFFF
+// | Mirrors       |      
+// | $0000-$3FFF   |      
+// |_ _ _ _ _ _ _ _| $4000
+// | Palettes      |      
+// |_ _ _ _ _ _ _ _| $3F00
+// | Name Tabels   |      
+// | (VRAM)        |      
+// |_ _ _ _ _ _ _ _| $2000
+// | Pattern Tables|      
+// | (CHR ROM)     |      
+// |_______________| $0000
+
 #[derive(Debug, PartialEq)]
 pub enum Mirroring {
     Vertical,
@@ -43,6 +57,8 @@ impl Ppu {
     }
 
     pub fn read_data(&mut self) -> u8 {
+        // temporary buffer used to keep the value
+        // that is read during the previous read request
         let addr = self.addr.get();
         self.inc_vram_addr();
 
@@ -65,8 +81,25 @@ impl Ppu {
         }
     }
 
+    // PPU memory address to VRAM index
+    // Horizontal:
+    //   [ A ] [ a ]
+    //   [ B ] [ b ]
+    // Vertical:
+    //   [ A ] [ B ]
+    //   [ a ] [ b ]
     pub fn mirror_vram_addr(&self, addr: u16) -> u16 {
-        todo!();
+        // mirror down 0x3000-0x3eff to 0x2000-0x2eff
+        let mirrored_vram = addr & 0b10111111111111;
+        let vram_index = mirrored_vram - 0x200;
+        let name_table = vram_index / 0x400;
+        match (&self.mirroring, name_table) {
+            (Mirroring::Vertical, 2) | (Mirroring::Vertical, 3) => vram_index - 0x800,
+            (Mirroring::Horizontal, 2) => vram_index - 0x400,
+            (Mirroring::Horizontal, 1) => vram_index - 0x400,
+            (Mirroring::Horizontal, 3) => vram_index - 0x800,
+            _ => vram_index,
+        }
     }
 }
 
