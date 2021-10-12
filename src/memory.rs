@@ -83,7 +83,9 @@ impl Mem for Bus {
             },
             // write only
             0x2000 | 0x2001 | 0x2003 | 0x2005 | 0x2006 | 0x4014 => {
-                panic!("read write only memory");
+                // TODO: need to be panic?
+                // panic!("read from write only memory");
+                0
             },
             0x2002 => self.ppu.read_status(),
             0x2004 => self.ppu.read_oam_data(),
@@ -92,8 +94,23 @@ impl Mem for Bus {
                 let mirrored = addr & 0b00100000_00000111;
                 self.mem_read(mirrored)
             },
+            0x4000 ..= 0x4015 => {
+                // TODO: ignore APU
+                0
+            },
+            0x4016 => {
+                // TODO: ignore joypad 1
+                0
+            },
+            0x4017 => {
+                // TODO: ignore joypad 2
+                0
+            },
             PRG_ROM ..= PRG_ROM_END => self.read_prg_rom(addr),
-            _ => panic!("Invalid memory access")
+            _ => {
+                print!("ignored memory reading from 0x{:X}", addr);
+                0
+            },
         }
     }
     
@@ -133,8 +150,24 @@ impl Mem for Bus {
                 let mirrored = addr & 0b00100000_00000111;
                 self.mem_write(mirrored, data);
             },
+            0x4000 ..= 0x4013 | 0x4015 => {
+                // TODO: ignore APU
+            },
+            0x4016 => {
+                // TODO: ignore joypad 1
+            },
+            0x4017 => {
+                // TODO: ignore joypad 2
+            },
+            0x4014 => {
+                // TODO: what happens here?
+                todo!();
+            },
             0x8000 ..=0xffff => panic!("cannot write to program ROM"),
-            _ => (), // TODO: should not ignore
+            _ => {
+                print!("ignored memory writing to 0x{:X}", addr);
+                panic!();
+            },
         }
     }
 

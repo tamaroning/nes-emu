@@ -131,15 +131,9 @@ fn main() {
     let mut cpu = cpu::Cpu::new(bus);
     cpu.reset();
 
-    loop {}
-
-    /*
     cpu.run_with_callback(move |cpu| {
-        // let opcode = cpu.mem_read(cpu.pc);
-        // println!("{:X}", opcode);
-        // println!("{}", trace::trace(cpu));
+        let opcode = cpu.mem_read(cpu.pc);
+        println!("{:X}", opcode);
+        println!("{}", trace::trace(cpu));
     });
-    */
-    
-
 }
