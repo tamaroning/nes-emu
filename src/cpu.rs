@@ -218,7 +218,7 @@ impl Cpu {
 
             match opcode {
                 // BRK
-                // TODO: correct?
+                // TODO: interruption
                 0x00 => return,
                 // TAX
                 0xAA => {
