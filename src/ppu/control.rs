@@ -1,4 +1,3 @@
-#[macro_use]
 use bitflags::bitflags;
 
 bitflags! {
