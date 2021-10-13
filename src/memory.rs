@@ -122,7 +122,7 @@ impl Mem for Bus<'_> {
             },
             PRG_ROM ..= PRG_ROM_END => self.read_prg_rom(addr),
             _ => {
-                print!("ignored memory reading from 0x{:X}", addr);
+                print!("ignored memory read-acess to 0x{:X}", addr);
                 0
             },
         }
@@ -180,9 +180,9 @@ impl Mem for Bus<'_> {
                 // TODO: what happens here?
                 todo!();
             },
-            0x8000 ..=0xffff => panic!("cannot write to program ROM"),
+            0x8000 ..=0xffff => panic!("cannot write to program ROM: 0x{:X}", addr),
             _ => {
-                print!("ignored memory writing to 0x{:X}", addr);
+                print!("ignored memory write-access to 0x{:X}", addr);
                 panic!();
             },
         }
