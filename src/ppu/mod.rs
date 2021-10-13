@@ -1,21 +1,21 @@
 mod address;
-mod mask;
 mod control;
-mod status;
+mod mask;
 mod scroll;
+mod status;
 
 // PPU Memory Map
 //  _______________  $FFFF
-// | Mirrors       |      
-// | $0000-$3FFF   |      
+// | Mirrors       |
+// | $0000-$3FFF   |
 // |_ _ _ _ _ _ _ _| $4000
-// | Palettes      |      
+// | Palettes      |
 // |_ _ _ _ _ _ _ _| $3F00
-// | Name Tabels   |      
-// | (VRAM)        |      
+// | Name Tabels   |
+// | (VRAM)        |
 // |_ _ _ _ _ _ _ _| $2000
-// | Pattern Tables|      
-// | (CHR ROM)     |      
+// | Pattern Tables|
+// | (CHR ROM)     |
 // |_______________| $0000
 
 #[derive(Debug, PartialEq)]
@@ -69,14 +69,17 @@ impl Ppu {
     pub fn write_to_ctrl(&mut self, value: u8) {
         let prev_nmi_status = self.ctrl.generate_vbalnk_nmi();
         self.ctrl.update(value);
-        if !prev_nmi_status && self.ctrl.generate_vbalnk_nmi()
-            && self.stat.is_in_vblank() {
+        if !prev_nmi_status && self.ctrl.generate_vbalnk_nmi() && self.stat.is_in_vblank() {
             self.nmi_interrupt = Some(1);
         }
     }
 
     pub fn write_to_mask(&mut self, value: u8) {
         self.mask.update(value);
+    }
+
+    pub fn write_to_scroll(&mut self, value: u8) {
+        self.scroll.write(value);
     }
 
     pub fn write_to_ppu_addr(&mut self, value: u8) {
@@ -111,18 +114,18 @@ impl Ppu {
     pub fn write_to_data(&mut self, value: u8) {
         let addr = self.addr.get();
         match addr {
-            0 ..= 0x1fff => panic!("Cannot write to character ROM"),
-            0x2000 ..= 0x2fff => {
+            0..=0x1fff => panic!("Cannot write to character ROM"),
+            0x2000..=0x2fff => {
                 self.vram[self.mirror_vram_addr(addr) as usize] = value;
-            },
-            0x3000 ..= 0x3eff => unimplemented!("Shouldn't write here"),
+            }
+            0x3000..=0x3eff => unimplemented!("Shouldn't write here"),
             0x3f10 | 0x3f14 | 0x3f18 | 0x3f1c => {
                 let origin = addr - 0x10;
                 self.palette_table[(origin - 0x3f00) as usize] = value;
-            },
-            0x3f00 ..= 0x3fff => {
+            }
+            0x3f00..=0x3fff => {
                 self.palette_table[(addr - 0x3f00) as usize] = value;
-            },
+            }
             _ => panic!("Unexpected accesss"),
         }
         self.inc_vram_addr();
@@ -135,24 +138,22 @@ impl Ppu {
         self.inc_vram_addr();
 
         match addr {
-            0x0000 ..= 0x1fff => {
+            0x0000..=0x1fff => {
                 let res = self.internal_buf;
                 self.internal_buf = self.chr_rom[addr as usize];
                 res
-            },
-            0x2000 ..= 0x2fff => {
+            }
+            0x2000..=0x2fff => {
                 let res = self.internal_buf;
                 self.internal_buf = self.vram[self.mirror_vram_addr(addr) as usize];
                 res
-            },
-            0x3000 ..= 0x3eff => panic!("Unexpected access"),
+            }
+            0x3000..=0x3eff => panic!("Unexpected access"),
             0x3f10 | 0x3f14 | 0x3f18 | 0x3f1c => {
                 let origin = addr - 0x10;
                 self.palette_table[(origin - 0x3f00) as usize]
-            },
-            0x3f00 ..= 0x3fff => {
-                self.palette_table[(addr - 0x3f00) as usize]
             }
+            0x3f00..=0x3fff => self.palette_table[(addr - 0x3f00) as usize],
             _ => panic!("unexpected"),
         }
     }
@@ -167,7 +168,7 @@ impl Ppu {
     pub fn mirror_vram_addr(&self, addr: u16) -> u16 {
         // mirror down 0x3000-0x3eff to 0x2000-0x2eff
         let mirrored_vram = addr & 0b10111111111111;
-        let vram_index = mirrored_vram - 0x200;
+        let vram_index = mirrored_vram - 0x2000;
         let name_table = vram_index / 0x400;
         match (&self.mirroring, name_table) {
             (Mirroring::Vertical, 2) | (Mirroring::Vertical, 3) => vram_index - 0x800,
@@ -186,12 +187,10 @@ impl Ppu {
             // must trigger NMI interruption and refresh screen
             // while scanline is in range 241 ~ 262
             if self.scanline == 241 {
+                self.stat.set_vblank_status(true);
+                self.stat.set_sprite_zero_hit(false);
                 if self.ctrl.generate_vbalnk_nmi() {
-                    self.stat.set_vblank_status(true);
-                    self.stat.set_sprite_zero_hit(false);
-                    if self.ctrl.generate_vbalnk_nmi() {
-                        self.nmi_interrupt = Some(1);
-                    }
+                    self.nmi_interrupt = Some(1);
                 }
             }
             if self.scanline >= 262 {
@@ -203,5 +202,39 @@ impl Ppu {
             }
         }
         return false;
+    }
+
+    pub fn new_empty_rom() -> Self {
+        Ppu::new(vec![0; 2048], Mirroring::Horizontal)
+    }
+}
+
+
+#[cfg(test)]
+pub mod test {
+    use super::*;
+
+    #[test]
+    fn test_ppu_vram_writes() {
+        let mut ppu = Ppu::new_empty_rom();
+        ppu.write_to_ppu_addr(0x23);
+        ppu.write_to_ppu_addr(0x05);
+        ppu.write_to_data(0x66);
+
+        assert_eq!(ppu.vram[0x0305], 0x66);
+    }
+
+    #[test]
+    fn test_ppu_vram_reads() {
+        let mut ppu = Ppu::new_empty_rom();
+        ppu.write_to_ctrl(0);
+        ppu.vram[0x0305] = 0x66;
+
+        ppu.write_to_ppu_addr(0x23);
+        ppu.write_to_ppu_addr(0x05);
+
+        ppu.read_data(); //load_into_buffer
+        assert_eq!(ppu.addr.get(), 0x2306);
+        assert_eq!(ppu.read_data(), 0x66);
     }
 }

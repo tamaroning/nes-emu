@@ -120,10 +120,11 @@ fn main() {
     // load program
     let rom = ines::Rom::analyze_raw(&raw).unwrap();
     
+    
     for i in 0..=255 {
-        let x: i32 = (i % 16);
-        let y: i32 = ((i - x)/16);
-        let mut tile_frame = tile::show_tile(&rom.chr_rom, 1, i as usize);
+        let x: i32 = i % 16;
+        let y: i32 = (i - x)/16;
+        let tile_frame = tile::show_tile(&rom.chr_rom, 1, i as usize);
         texture.update(sdl2::rect::Rect::new(x*9, y*9, 8, 8), &tile_frame.data, 256 * 3).unwrap();
     }
     canvas.copy(&texture, None, None).unwrap();
@@ -151,7 +152,7 @@ fn main() {
     // cpu.run();
     cpu.run_with_callback(move |cpu| {
         let opcode = cpu.mem_read(cpu.pc);
-        println!("{:X}", opcode);
-        println!("{}", trace::trace(cpu));
+        //println!("{:X}", opcode);
+        //println!("{}", trace::trace(cpu));
     });
 }

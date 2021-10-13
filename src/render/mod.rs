@@ -29,7 +29,7 @@ pub fn render(ppu: &Ppu, frame: &mut frame::Frame) {
                     1 => palette::SYSTEM_PALLETE[0x23],
                     2 => palette::SYSTEM_PALLETE[0x27],
                     3 => palette::SYSTEM_PALLETE[0x30],
-                    _ => panic!("can't be"),
+                    _ => panic!(),
                 };
                 frame.set_pixel(tile_x * 8 + x, tile_y * 8 + y, rgb);
             }
