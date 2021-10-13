@@ -33,7 +33,7 @@ pub struct Ppu {
     pub oam_data: [u8; 256],
     pub oam_addr: u8,
     pub mirroring: Mirroring,
-    ctrl: control::ControlRegister,
+    pub ctrl: control::ControlRegister,
     mask: mask::MaskRegister,
     addr: address::AddrRegister,
     stat: status::StatusRegister,

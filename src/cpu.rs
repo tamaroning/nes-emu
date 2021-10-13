@@ -34,7 +34,7 @@ bitflags!{
 const STACK_BASE: u16 = 0x0100;
 const STACK_RESET: u8 = 0xfd;
 
-pub struct Cpu {
+pub struct Cpu<'a> {
     // general resgisters
     pub pc: u16,
     pub sp: u8,
@@ -42,7 +42,7 @@ pub struct Cpu {
     pub x: u8,
     pub y: u8,
     pub stat: StatFlags,
-    pub bus: Bus,
+    pub bus: Bus<'a>,
 }
 
 #[derive(Debug)]
@@ -60,7 +60,7 @@ pub enum AddressingMode {
     Implied,
 }
 
-impl Mem for Cpu {
+impl Mem for Cpu<'_> {
     fn mem_read(&mut self, addr: u16) -> u8 {
         self.bus.mem_read(addr)
     }
@@ -104,8 +104,8 @@ mod interrupt {
     };
 }
 
-impl Cpu {
-    pub fn new(bus: Bus) -> Self {
+impl<'a> Cpu<'a> {
+    pub fn new<'b>(bus: Bus<'b>) -> Cpu<'b> {
         Cpu {
             pc: 0,
             sp: STACK_RESET,
@@ -1012,6 +1012,7 @@ mod test {
     use super::*;
     use ines::test;
     use trace::trace;
+    use ppu::Ppu;
 
     #[test]
     fn test_0xa9_lda_immidiate_load_data() {
@@ -1020,7 +1021,7 @@ mod test {
         for i in 0..prg.len() {
             rom.prg_rom[i] = prg[i];
         }
-        let bus = Bus::new(rom);
+        let bus = Bus::new(rom, |ppu: &Ppu|{}) ;
         let mut cpu = Cpu::new(bus);
         cpu.reset();
         cpu.pc = 0x8000;
@@ -1036,7 +1037,7 @@ mod test {
         for i in 0..prg.len() {
             rom.prg_rom[i] = prg[i];
         }
-        let bus = Bus::new(rom);
+        let bus = Bus::new(rom, |ppu: &Ppu| {});
         let mut cpu = Cpu::new(bus);
         cpu.reset();
         cpu.pc = 0x8000;
@@ -1051,7 +1052,7 @@ mod test {
         for i in 0..prg.len() {
             rom.prg_rom[i] = prg[i];
         }
-        let bus = Bus::new(rom);
+        let bus = Bus::new(rom, |ppu: &Ppu| {});
         let mut cpu = Cpu::new(bus);
         cpu.reset();
         cpu.pc = 0x8000;
@@ -1066,7 +1067,7 @@ mod test {
         for i in 0..prg.len() {
             rom.prg_rom[i] = prg[i];
         }
-        let bus = Bus::new(rom);
+        let bus = Bus::new(rom, |ppu: &Ppu| {});
         let mut cpu = Cpu::new(bus);
         cpu.reset();
         cpu.pc = 0x8000;
@@ -1081,7 +1082,7 @@ mod test {
         for i in 0..prg.len() {
             rom.prg_rom[i] = prg[i];
         }
-        let bus = Bus::new(rom);
+        let bus = Bus::new(rom, |ppu: &Ppu| {});
         let mut cpu = Cpu::new(bus);
         cpu.reset();
         cpu.pc = 0x8000;
@@ -1096,7 +1097,7 @@ mod test {
         for i in 0..prg.len() {
             rom.prg_rom[i] = prg[i];
         }
-        let bus = Bus::new(rom);
+        let bus = Bus::new(rom, |ppu: &Ppu| {});
         let mut cpu = Cpu::new(bus);
         cpu.reset();
         cpu.pc = 0x8000;

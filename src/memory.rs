@@ -35,29 +35,43 @@ const PRG_ROM_END: u16 = 0xFFFF;
 // | Zero Page     |       |               |
 // |_______________| $0000 |_______________|
 
-pub struct Bus {
+pub struct Bus<'call> {
     // 0x800 = 2048
     cpu_vram: [u8; 0x800],
     prg_rom: Vec<u8>,
     ppu: Ppu,
     cycles: usize,
+    gameloop_callback: Box<FnMut(&Ppu) + 'call>,
 }
 
-impl Bus {
-    pub fn new(rom: Rom) -> Self {
+impl<'a> Bus<'a> {
+    pub fn new<'call, F>(rom: Rom, gameloop_callback: F) -> Bus<'call>
+    where F: FnMut(&Ppu) + 'call
+    {
         let ppu = Ppu::new(rom.chr_rom, rom.mirroring);
         Bus {
             cpu_vram: [0; 0x800],
             prg_rom: rom.prg_rom,
             ppu: ppu,
             cycles: 0,
+            gameloop_callback: Box::from(gameloop_callback),
         }
     }
 
+    // TODO: FIX ME!
     pub fn tick(&mut self, cycles: u8) {
         self.cycles += cycles as usize;
+        // let prev_nmi = self.ppu.nmi_interrupt.is_some();
         // PPU clock is 3 times faster than CPU clock
-        self.ppu.tick(cycles * 3);
+        let new_frame = self.ppu.tick(cycles * 3);
+        if new_frame {
+            (self.gameloop_callback)(&self.ppu);
+        }
+        // let cur_nmi = self.ppu.nmi_interrupt.is_some();
+        // if !prev_nmi && cur_nmi {
+        //    // TODO: inform about joypad
+        //    (self.gameloop_callback)(&self.ppu);
+        //}
     }
 
     pub fn poll_nmi_status(&mut self) -> Option<u8> {
@@ -73,7 +87,7 @@ pub trait Mem {
     fn read_prg_rom(&self, addr: u16) -> u8;
 }
 
-impl Mem for Bus {
+impl Mem for Bus<'_> {
     fn mem_read(&mut self, addr: u16) -> u8 {
         match addr {
             // 0x0000 ~ 0x1fff used as RAM

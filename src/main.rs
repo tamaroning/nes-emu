@@ -23,6 +23,8 @@ use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::sys::exit;
 
+use crate::render::frame;
+
 /*
 fn handle_user_input(cpu: &mut cpu::Cpu, event_pump: &mut EventPump) {
     for event in event_pump.poll_iter() {
@@ -110,15 +112,15 @@ fn main() {
     
     // open nes file
     let path = Path::new(args[1].as_str());
-    let mut file = File::open(path)
-        .unwrap();
+    let mut file = File::open(path).unwrap();
     let mut raw: [u8; 0x20000] = [0; 0x20000];
     file.read(&mut raw).unwrap();
     let raw = raw.to_vec();
     
     // load program
     let rom = ines::Rom::analyze_raw(&raw).unwrap();
-    for i in 0..=250 {
+    
+    for i in 0..=255 {
         let x: i32 = (i % 16);
         let y: i32 = ((i - x)/16);
         let mut tile_frame = tile::show_tile(&rom.chr_rom, 1, i as usize);
@@ -126,11 +128,27 @@ fn main() {
     }
     canvas.copy(&texture, None, None).unwrap();
     canvas.present();
+    
+    let mut frame = render::frame::Frame::new();
+    let bus = memory::Bus::new(rom, move |ppu: &ppu::Ppu| {
+        render::render(ppu, &mut frame);
+        texture.update(None, &frame.data, 256 * 3).unwrap();
+        canvas.copy(&texture, None, None).unwrap();
+        canvas.present();
 
-    let bus = memory::Bus::new(rom);
+        for event in event_pump.poll_iter() {
+            match event {
+                Event::Quit { .. } | Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => std::process::exit(0),
+                _ => (),
+            }
+        }
+    });
     let mut cpu = cpu::Cpu::new(bus);
     cpu.reset();
-
+    // cpu.run();
     cpu.run_with_callback(move |cpu| {
         let opcode = cpu.mem_read(cpu.pc);
         println!("{:X}", opcode);
