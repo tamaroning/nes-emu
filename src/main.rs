@@ -7,6 +7,7 @@ mod trace;
 mod ppu;
 mod tile;
 mod render;
+mod controller;
 #[macro_use]
 extern crate lazy_static;
 extern crate bitflags;
@@ -16,6 +17,7 @@ use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 use memory::Mem;
+use std::collections::HashMap;
 use sdl2::event::Event;
 use sdl2::EventPump;
 use sdl2::keyboard::Keycode;
@@ -23,25 +25,36 @@ use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::sys::exit;
 
-use crate::render::frame;
-
-/*
 fn handle_user_input(cpu: &mut cpu::Cpu, event_pump: &mut EventPump) {
     for event in event_pump.poll_iter() {
         match event {
-            Event::Quit { .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-                std::process::exit(0)
-            },
-            Event::KeyDown { keycode: Some(Keycode::W), .. } => {
+            Event::Quit { .. }
+            | Event::KeyDown {
+                keycode: Some(Keycode::Escape),
+                ..
+            } => std::process::exit(0),
+            Event::KeyDown {
+                keycode: Some(Keycode::W),
+                ..
+            } => {
                 cpu.mem_write(0xff, 0x77);
-            },
-            Event::KeyDown { keycode: Some(Keycode::S), .. } => {
+            }
+            Event::KeyDown {
+                keycode: Some(Keycode::S),
+                ..
+            } => {
                 cpu.mem_write(0xff, 0x73);
-            },
-            Event::KeyDown { keycode: Some(Keycode::A), .. } => {
+            }
+            Event::KeyDown {
+                keycode: Some(Keycode::A),
+                ..
+            } => {
                 cpu.mem_write(0xff, 0x61);
-            },
-            Event::KeyDown { keycode: Some(Keycode::D), .. } => {
+            }
+            Event::KeyDown {
+                keycode: Some(Keycode::D),
+                ..
+            } => {
                 cpu.mem_write(0xff, 0x64);
             }
             _ => (),
@@ -64,6 +77,7 @@ fn color(byte: u8) -> Color {
     }
 }
 
+/*
 fn read_screen_state(cpu: &cpu::Cpu, frame: &mut [u8; 32 * 3 * 32]) -> bool {
     let mut frame_idx = 0;
     let mut update = false;
@@ -82,7 +96,7 @@ fn read_screen_state(cpu: &cpu::Cpu, frame: &mut [u8; 32 * 3 * 32]) -> bool {
         frame_idx += 3;
     }
     update
- }
+}
 */
 
 fn main() {
@@ -120,7 +134,6 @@ fn main() {
     // load program
     let rom = ines::Rom::analyze_raw(&raw).unwrap();
     
-    
     for i in 0..=255 {
         let x: i32 = i % 16;
         let y: i32 = (i - x)/16;
@@ -130,6 +143,17 @@ fn main() {
     canvas.copy(&texture, None, None).unwrap();
     canvas.present();
     
+    // setup the controller
+    let mut key_map = HashMap::new();
+    key_map.insert(Keycode::Down, controller::JoypadButton::DOWN);
+    key_map.insert(Keycode::Up, controller::JoypadButton::UP);
+    key_map.insert(Keycode::Right, controller::JoypadButton::RIGHT);
+    key_map.insert(Keycode::Left, controller::JoypadButton::LEFT);
+    key_map.insert(Keycode::Space, controller::JoypadButton::SELECT);
+    key_map.insert(Keycode::Return, controller::JoypadButton::START);
+    key_map.insert(Keycode::A, controller::JoypadButton::A);
+    key_map.insert(Keycode::S, controller::JoypadButton::B);
+
     let mut frame = render::frame::Frame::new();
     let bus = memory::Bus::new(rom, move |ppu: &ppu::Ppu| {
         render::render(ppu, &mut frame);
@@ -151,7 +175,7 @@ fn main() {
     cpu.reset();
     // cpu.run();
     cpu.run_with_callback(move |cpu| {
-        let opcode = cpu.mem_read(cpu.pc);
+        //let opcode = cpu.mem_read(cpu.pc);
         //println!("{:X}", opcode);
         //println!("{}", trace::trace(cpu));
     });
