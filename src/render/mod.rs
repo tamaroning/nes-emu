@@ -12,7 +12,7 @@ fn bg_palette(ppu: &Ppu, tile_column: usize, tile_row: usize) -> [u8; 4] {
         (1,0) => (attr_byte >> 2) & 0b11,
         (0,1) => (attr_byte >> 4) & 0b11,
         (1,1) => (attr_byte >> 6) & 0b11,
-        (_,_) => panic!(),
+        (_, _) => panic!(),
     };
 
     let palette_start: usize = 1 + (palette_idx as usize) * 4;
