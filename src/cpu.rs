@@ -356,7 +356,7 @@ impl<'a> Cpu<'a> {
                 // PHA
                 0x48 => self.stack_push(self.a),
                 // PLA
-                0x68 => { self.a = self.stack_pop(); }
+                0x68 => self.pla(),
                 // PHP
                 0x08 => self.php(),
                 // PLP
@@ -542,6 +542,7 @@ impl<'a> Cpu<'a> {
                     let addr = self.get_operand_address(&cur_inst.mode);
                     let data = self.mem_read(addr);
                     self.a = data;
+                    self.update_zero_and_negative_flags(self.a);
                     self.x = self.a;
                 },
                 // SAX
@@ -669,7 +670,6 @@ impl<'a> Cpu<'a> {
         let addr = self.get_operand_address(mode);
         let val = self.mem_read(addr);
         self.a = val & self.a;
-        // TODO: necessary?
         self.update_zero_and_negative_flags(self.a);
     }
 
@@ -677,7 +677,6 @@ impl<'a> Cpu<'a> {
         let addr = self.get_operand_address(mode);
         let val = self.mem_read(addr);
         self.a = val | self.a;
-        // TODO: necessary?
         self.update_zero_and_negative_flags(self.a);
     }
 
@@ -685,7 +684,6 @@ impl<'a> Cpu<'a> {
         let addr = self.get_operand_address(mode);
         let data = self.mem_read(addr);
         self.a = data ^ self.a;
-        // TODO: necessay?
         self.update_zero_and_negative_flags(self.a);
     }
 
@@ -703,7 +701,6 @@ impl<'a> Cpu<'a> {
         }
         data = data << 1;
         self.a = data;
-        // TODO: necessary?
         self.update_zero_and_negative_flags(self.a);
     }
 
@@ -730,7 +727,6 @@ impl<'a> Cpu<'a> {
         }
         data = data >> 1;
         self.a = data;
-        // TODO: necessary?
         self.update_zero_and_negative_flags(self.a);
     }
 
@@ -761,7 +757,6 @@ impl<'a> Cpu<'a> {
             data = data | 1;
         }
         self.a = data;
-        // TODO: necessary?
         self.update_zero_and_negative_flags(data);
     }
 
@@ -796,7 +791,6 @@ impl<'a> Cpu<'a> {
             data = data | 0b1000_0000;
         }
         self.a = data;
-        // TODO: necessary?
         self.update_zero_and_negative_flags(data);
     }
 
@@ -909,6 +903,12 @@ impl<'a> Cpu<'a> {
         self.a = res;
     }
 
+    fn pla(&mut self) {
+        let data = self.stack_pop();
+        self.a = data;
+        self.update_zero_and_negative_flags(self.a);
+    }
+
     fn php(&mut self) {
         let mut stat = self.stat.clone();
         stat.insert(StatFlags::BREAK);
@@ -954,14 +954,17 @@ impl<'a> Cpu<'a> {
 
     fn and_with_a(&mut self, data: u8) {
         self.a = data & self.a;
+        self.update_zero_and_negative_flags(self.a);
     }
 
     fn xor_with_a(&mut self, data: u8) {
         self.a = data ^ self.a;
+        self.update_zero_and_negative_flags(self.a);
     }
 
     fn or_with_a(&mut self, data: u8) {
         self.a = data | self.a;
+        self.update_zero_and_negative_flags(self.a);
     }
 
     fn sub_from_a(&mut self, data: u8) {
