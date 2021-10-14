@@ -177,8 +177,12 @@ impl Mem for Bus<'_> {
                 // TODO: ignore joypad 2
             },
             0x4014 => {
-                // TODO: what happens here?
-                todo!();
+                let mut buf: [u8; 256] = [0; 256];
+                let hi: u16 = (data as u16) << 8;
+                for i in 0 .. 256u16 {
+                    buf[i as usize] = self.mem_read(hi + i);
+                }
+                self.ppu.write_oam_dma(&buf);
             },
             0x8000 ..=0xffff => panic!("cannot write to program ROM: 0x{:X}", addr),
             _ => {
